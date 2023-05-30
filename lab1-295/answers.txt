@@ -1,0 +1,60 @@
+
+    1. What were the four commands you used to assemble, compile, link, and run in the "Compiling and Assembling" section?
+        gcc -Wall -Wpedantic -std=c17 -march=haswell -c array_sum.S 
+        gcc -Wall -Wpedantic -std=c17 -march=haswell -c array_sum_speed.c 
+        gcc -Wall -Wpedantic -std=c17 -march=haswell array_sum.o array_sum_speed.o 
+        ./a.out 10000
+    2. What was the first command you used to compile array_sum.c? How must faster/slower was your C implementation compared to the provided assembly?
+        gcc -Wall -Wpedantic -std=c17 -march=haswell array_sum.c array_sum_speed.c
+        
+        Compare to the compliing with assembly and object files, which was avarage 45,000 cycles, compling it with C implementation took so much longer which was around 325,000 cycles. (see below for more exact result)
+
+    3. How did the speed of the C and assembly implementations of array_sum compare after you added -O3 to the compilation command? How did C speed compare with and without -O3?
+        
+        When it is complied with -O3 tag, the number of cycles avarage was around 1,338 - 2,195 cycles which is incredibly smaller than when it is complied without the tag, which was around 325,000 cycles. 
+
+
+The below are the test result:
+
+
+with Assembly
+calculated 44901 in 46544 cycles
+calculated 44901 in 48308 cycles
+calculated 44901 in 45742 cycles
+calculated 44901 in 49710 cycles
+calculated 44901 in 45184 cycles
+calculated 44901 in 48952 cycles
+calculated 44901 in 45385 cycles
+calculated 44901 in 45686 cycles
+calculated 44901 in 44928 cycles
+calculated 44901 in 67507 cycles
+
+
+with C implementation
+calculated 44901 in 324076 cycles
+calculated 44901 in 327728 cycles
+calculated 44901 in 324318 cycles
+calculated 44901 in 316416 cycles
+calculated 44901 in 328552 cycles
+calculated 44901 in 333008 cycles
+calculated 44901 in 329528 cycles
+calculated 44901 in 316503 cycles
+calculated 44901 in 331303 cycles
+calculated 44901 in 328111 cycles
+
+
+with -O3 tag: 
+
+C 
+danbik@asb9838nu-c12:~/Desktop/lab1-295$ gcc -Wall -Wpedantic -std=c17 -march=haswell -O3 array_sum.c array_sum_speed.c
+danbik@asb9838nu-c12:~/Desktop/lab1-295$ ./a.out 10000
+calculated 44901 in 2195 cycles
+calculated 44901 in 1509 cycles
+calculated 44901 in 1370 cycles
+calculated 44901 in 1360 cycles
+calculated 44901 in 1316 cycles
+calculated 44901 in 1340 cycles
+calculated 44901 in 1330 cycles
+calculated 44901 in 1346 cycles
+calculated 44901 in 1340 cycles
+calculated 44901 in 1338 cycles

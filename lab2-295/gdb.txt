@@ -1,0 +1,9 @@
++break 28
+Breakpoint 1 at 0x4010d8: file main.S, line 28.
++run
+Starting program: /home/danbik/Desktop/lab2-295/a.out 
+
+Breakpoint 1, _start () at main.S:28
++next
++next
++q

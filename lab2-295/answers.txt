@@ -1,0 +1,9 @@
+
+    1. In a few words, describe the value returned by provided do_something function. (This should be a natural sentence that describes the result, not a mechanical description of what the code does, and not "64" because that's what's returned for a specific argument: you should describe what the function returns in general).
+        The do_something function starts with pusing the %rbx register onto the stack. then it sets the values of register %rcx to 1 and %rbx to 0. A loop starts, and the loop repeats following: %rcx is added to %rbx, 2 is added to %rcx, then %rbx is compared with the value in %rdi. If %rbx is less than %rdi, the loop continues to the next iteration. Oherwise, it exits the loop.
+        After exiting the loop, the value in %rbx is moved to %rax register as the return value.
+        %rbx is then popped from the stack. The function ends with a ret instruction, which transfers control back to the caller.
+    2. In your calculate function, why did you choose a preserved/non-preserved register for the different partial results?
+        Initially I used preserved r15 for x value and rest of the non-preserved value r10, r11 and r9 for the calculation. However, as I had to do push and pop to prevent it from changing the value, I realized that it would be a better decision to use preserved registers other than non-preserved r9, r10 and r11 registers. 
+        If I had more time, I would do it using the preserved registered so that I don't have to worry about registers changing the value after the function calls. 
+
