@@ -17,6 +17,9 @@ uint64_t factorial(uint64_t n) {
     }
 }
 
+//Name: Danbi Kim
+//Student ID:301359759
+
 char* to_base(uint64_t v, short base, char ending) {
     unsigned char c;
     char* pos = buffer + BLEN - 2;
