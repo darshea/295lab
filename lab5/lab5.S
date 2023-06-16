@@ -37,51 +37,36 @@ base_case:
 
 polynomial1: 
 
-    push %rsi           # a
-    push %rdx           # b 
+   mov %rdi, %rax       
+    imul %rdi, %rax     
+    imul %rdi, %rax     # rax = x*x*x
 
-                        # r8  == already d. 
-    
-    mov %rcx, %r12      # c to r12
-    mov %rdi, %rax      # moving x to rax
-    mul %r12
+    imul %rsi, %rax     
+    mov %rax, %r9       # a*x*x*x = r9
 
-    mov %rax, %r12      # r12 = c*x
-    add %r12, %r8       # adding c*x + d = r12
-    mov %rdi, %rax      # reset rax to x
-    
-    pop %r8             # pop the b value to r8
-    mul %rdi            # x*x
-    mul %r8             # b*x*x
-    add %r12, %rax      # adding b*x*x + c*x + d = r12
+    mov %rdi, %rax      
+    imul %rdi, %rax     # rax = x*x
+    imul %rdx, %rax     # rax = b*x*x
 
-    pop %r8             # pop the a value to r8
-    mov %rdi, %rax      # reset rax to x
-    mul %rdi
-    mul %rdi            # x*x*x
-    mul %r8             # a*x*x*x
-    add %r12, %rax      # adding a*x*x*x + b*x*x + c*x + d = r12
+    add %rax, %r9       # r9 += b*x*x
+    imul %rcx, %rdi     # rdi = c*x
+    add %rdi, %r9       # r9 += c*x
+    add %r8, %r9        # r9 += d
 
-    mov %r12, %rax      # move final result to rax
-
-    ret 
-    
+    mov %r9, %rax       
+    ret
 
 .global polynomial2
 
 polynomial2:
     
-    mov %rdi, %rax      # moving x to rax
-    mul %rsi            # a*x = rax
-    add %rdx, %rax      # a*x + b = rdx
-    mov %rdi, %rax      # moving x to rax
-    mul %rdx
-    add %rcx, %rax      # x*(a*x + b) + c = rcx
-    mov %rdi, %rax      # moving x to rax
-    mul %rcx        
-    add %r8, %rax       # x*(x*(a*x + b) + c) + d
-
-    mov %r8, %rax       
+    mov %rdi, %rax      
+    imul %rsi, %rax     
+    add %rdx, %rax      
+    imul %rdi, %rax     # rax = x*(a*x+b)
+    add %rcx, %rax      # rax += c
+    imul %rdi, %rax     # rax = x*(x*(a*x+b)+c)
+    add %r8, %rax       # rax += d
 
     ret
 
@@ -120,5 +105,5 @@ mul1:
 mul2:
     mov %rdi, %rax      
     shl $16, %rax        
-    add %rax, %rdi      # rax = rdi * 65537.
+    add %rdi, %rax      # rax = rdi * 65537.
     ret

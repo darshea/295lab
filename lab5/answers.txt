@@ -2,29 +2,61 @@
     1. What was your test setup (i.e. what CPU model/generation did you test with? Desktop or laptop or other?) 
     CSIL Linux Desktop 
     2. What were your results: how much faster (likely expressed as a fraction/percent) is each #2 implementation? (There is no exact answer here: results will vary by run, but give your best estimate of the "truth".)
+    danbik@asb9838nu-b04:~/Desktop/295lab/lab5$ ./a.out
+0 1 1 2 3 5 8 13 21 34
+fibonacci(35) == 9227465 == 9227465
+              warmup(1) calculated        100000000 in    188530063 cycles
+              warmup(2) calculated        200000000 in    188234847 cycles
+              warmup(3) calculated        300000000 in    187570852 cycles
+              warmup(4) calculated        400000000 in    187358182 cycles
+              warmup(5) calculated        500000000 in    188841060 cycles
+polynomial1(3,2,7,-1,2) calculated      11600000000 in    392300262 cycles
+polynomial2(3,2,7,-1,2) calculated      11600000000 in    242451462 cycles
+polynomial3(3,2,7,-1,2) calculated      11600000000 in    224206758 cycles
+is_odd1(7) + is_odd1(8) calculated        100000000 in   3955497693 cycles
+is_odd2(7) + is_odd2(8) calculated        100000000 in    549165642 cycles
+is_odd3(7) + is_odd3(8) calculated        100000000 in    577755069 cycles
+              mul1(123) calculated  806105100000000 in    101494425 cycles
+              mul2(123) calculated  806105100000000 in    211482385 cycles
+              mul3(123) calculated  806105100000000 in    229556595 cycles
+danbik@asb9838nu-b04:~/Desktop/295lab/lab5$ 
+
+
+For the polynomial functions:
+
+    polynomial1 ran in 392300262 cycles
+    polynomial2 ran in 242451462 cycles
+
+The speed improvement can be calculated as (392300262 - 242451462) / 392300262 = 38.2%, meaning polynomial2 is approximately 38.2% faster than polynomial1.
+
+For the is_odd functions:
+
+    is_odd1 ran in 3955497693 cycles
+    is_odd2 ran in 549165642 cycles
+
+The speed improvement can be calculated as (3955497693 - 549165642) / 3955497693 = 86.1%, meaning is_odd2 is approximately 86.1% faster than is_odd1.
+
+For the mul functions:
+
+    mul1 ran in 101494425 cycles
+    mul2 ran in 211482385 cycles
+
+In this case, mul2 is slower than mul1. The increase in cycle count is (211482385 - 101494425) / 101494425 = 108.3%, meaning mul2 took approximately 108.3% more cycles to run compared to mul1.
 
     
     3. In each case, the C implementation (#3) was described with the "slow" algorithm. How did they compare to the "fast" algorithm after the optimized processed them?
+
+In my case, polynomial3 was the fastest, even though it was supposed to represent the "slow" algorithm.
+
+For is_odd functions, is_odd2  was the fastest, while is_odd3 (the C implementation) was slower, but still significantly faster than is_odd1.
+
+For the mul functions mul1 was the fastest, while mul3 (the C implementation) was the slowest.
+
+In summary, the speed of the C implementations (#3) varied - in some cases they were faster, and in others they were slower. 
+
     
     
     [optional] Do you see any pattern to when mul1 is faster/slower than mul2 on different processors/computers/whatever? Feel free to share timing results (but not solutions) with others in the course if it helps form a pattern.
 
 
 
-danbik@asb9838nu-b04:~/Desktop/295lab/lab5$ ./a.out
-0 1 1 2 3 5 8 13 21 34
-fibonacci(35) == 9227465 == 9227465
-              warmup(1) calculated        100000000 in    188096773 cycles
-              warmup(2) calculated        200000000 in    188205584 cycles
-              warmup(3) calculated        300000000 in    188295467 cycles
-              warmup(4) calculated        400000000 in    187530882 cycles
-              warmup(5) calculated        500000000 in    188133540 cycles
-polynomial1(3,2,7,-1,2) calculated              -33 in    552733486 cycles
-polynomial2(3,2,7,-1,2) calculated        200000000 in    359799976 cycles
-polynomial3(3,2,7,-1,2) calculated      11600000000 in    221936962 cycles
-is_odd1(7) + is_odd1(8) calculated        100000000 in   4089125044 cycles
-is_odd2(7) + is_odd2(8) calculated        100000000 in    556028350 cycles
-is_odd3(7) + is_odd3(8) calculated        100000000 in    584883005 cycles
-              mul1(123) calculated  806105100000000 in    138182010 cycles
-              mul2(123) calculated  806092800000000 in    194462729 cycles
-              mul3(123) calculated  806105100000000 in    241862747 cycles
