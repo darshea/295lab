@@ -1,0 +1,30 @@
+
+    1. What was your test setup (i.e. what CPU model/generation did you test with? Desktop or laptop or other?) 
+    CSIL Linux Desktop 
+    2. What were your results: how much faster (likely expressed as a fraction/percent) is each #2 implementation? (There is no exact answer here: results will vary by run, but give your best estimate of the "truth".)
+
+    
+    3. In each case, the C implementation (#3) was described with the "slow" algorithm. How did they compare to the "fast" algorithm after the optimized processed them?
+    
+    
+    [optional] Do you see any pattern to when mul1 is faster/slower than mul2 on different processors/computers/whatever? Feel free to share timing results (but not solutions) with others in the course if it helps form a pattern.
+
+
+
+danbik@asb9838nu-b04:~/Desktop/295lab/lab5$ ./a.out
+0 1 1 2 3 5 8 13 21 34
+fibonacci(35) == 9227465 == 9227465
+              warmup(1) calculated        100000000 in    188096773 cycles
+              warmup(2) calculated        200000000 in    188205584 cycles
+              warmup(3) calculated        300000000 in    188295467 cycles
+              warmup(4) calculated        400000000 in    187530882 cycles
+              warmup(5) calculated        500000000 in    188133540 cycles
+polynomial1(3,2,7,-1,2) calculated              -33 in    552733486 cycles
+polynomial2(3,2,7,-1,2) calculated        200000000 in    359799976 cycles
+polynomial3(3,2,7,-1,2) calculated      11600000000 in    221936962 cycles
+is_odd1(7) + is_odd1(8) calculated        100000000 in   4089125044 cycles
+is_odd2(7) + is_odd2(8) calculated        100000000 in    556028350 cycles
+is_odd3(7) + is_odd3(8) calculated        100000000 in    584883005 cycles
+              mul1(123) calculated  806105100000000 in    138182010 cycles
+              mul2(123) calculated  806092800000000 in    194462729 cycles
+              mul3(123) calculated  806105100000000 in    241862747 cycles
