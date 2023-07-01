@@ -1,2 +1,19 @@
-What commands did you use to compile/assemble and run your code for this lab?
+What commands did you use to compile/assemble and run your code for this lab?:
+ for test : gcc -Wall -Wpedantic -std=c17 -march=haswell -O3 tests.c lab7.S
+ for timing: gcc -Wall -Wpedantic -o3 -std=c17 -march=haswell -O3 timing.c lab7c.c lab7.S
 How did the running times compare for the various dot product implementations?
+    danbik@asb9838nu-a08:~/Desktop/295lab/lab7$ ./a.out
+                     warmup(LENGTH) calculated                0 in  0.00 cycles/elt
+            dot(arr1, arr2, LENGTH) calculated    4369200000000 in  1.94 cycles/elt
+          dot_c(arr1, arr2, LENGTH) calculated    4369200000000 in  1.52 cycles/elt
+       dot_struct(arr_pair, LENGTH) calculated    4369200000000 in  2.34 cycles/elt
+     dot_struct_c(arr_pair, LENGTH) calculated    4369200000000 in  2.37 cycles/elt
+
+     
+The Assembly implementation of the simple dot product function (dot) was slightly slower than
+ its C counterpart (dot_c), with a cycle/element ratio of 1.94 versus 1.52. 
+ However, when considering the struct-based dot product, the Assembly version (dot_struct) 
+ was marginally quicker than the C version (dot_struct_c), with a cycle/element ratio of 2.34 
+ versus 2.37. Therefore, for my implementation, there is not a significant performance difference between the 
+ Assembly and C implementations for these specific functions, although assembly code should be faster. 
+
