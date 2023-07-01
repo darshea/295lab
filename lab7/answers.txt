@@ -1,0 +1,2 @@
+What commands did you use to compile/assemble and run your code for this lab?
+How did the running times compare for the various dot product implementations?
