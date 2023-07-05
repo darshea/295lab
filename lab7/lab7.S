@@ -28,7 +28,6 @@ randint:
     ret
 
 
-.section .text
 .global fill_array
 fill_array:
     # Arguments:
