@@ -1,0 +1,18 @@
+1. Do you promise you got a "All heap blocks were freed" on your array-2d.c code from last week?
+YES.
+2. When bubble sorting a random array, what fraction of the running time do you think is being spent on examining values (the loops + comparison)? Swapping values? Branch mispredictions?
+3. What were the tests of bubble sort you ran under perf? (Likely 2 or 3 runs with different calls to just_sort.)
+4. What fraction of the branches at the if in bubble sort were mispredicted when the array was random? When it was already sorted? Note that for an array of 20000, the if should execute 199,990,000 times.
+5. How did the Perf report number of cache misses change with the larger 2D array "height"? Does it match your expectations?
+6. How did the Cachegrind report number of cache misses change with the larger 2D array "height"? Does it match your expectations?
+
+danbik@asb9838nu-a08:~/Desktop/295lab/lab9$ ./a.out 20000
+Array size: 156 kB
+    bubble_sort on sorted sorted    20000 values in  160.94 ms
+   bubble_sort on reverse sorted    20000 values in   95.84 ms
+    bubble_sort on random sorted    20000 values in  441.43 ms
+          qsort on random sorted    20000 values in    1.60 ms
+      std::sort on random sorted    20000 values in    0.90 ms
+    bubble_sort on sorted sorted    20000 values in  161.28 ms
+   bubble_sort on reverse sorted    20000 values in   98.30 ms
+    bubble_sort on random sorted    20000 values in  443.88 ms
