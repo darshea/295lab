@@ -27,7 +27,6 @@ int main(int argc, char* argv[]) {
     printf("Calculated " DATA_PRINTF " in %8.2f ms on %lu*%lu array.\n", res->result, res->elapsed_ms, w, h);
     free(res);
     free(array);
-    free(some_other_array);
 
     return 0;
 }
