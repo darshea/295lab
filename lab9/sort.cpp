@@ -180,7 +180,26 @@ int main(int argc, char* argv[]) {
     uint64_t length = atol(argv[1]);
     printf("Array size: %lu kB\n", length * sizeof(DATA_T) / 1024);
     
-    // Try to get the CPU out of a low-power state...
+    printf("Array size: %lu kB\n", length * sizeof(DATA_T) / 1024);
+
+    printf("\nRunning bubble_sort with just_sort on already sorted array\n");
+    just_sort(bubble_sort, length, SORTED);
+
+    
+    /*
+    // Already sorted
+    printf("\nRunning bubble_sort on already sorted array\n");
+    time_sort("bubble_sort on sorted", bubble_sort, length, SORTED);
+    
+    // Reverse sorted
+    printf("\nRunning bubble_sort on reverse sorted array\n");
+    time_sort("bubble_sort on reverse", bubble_sort, length, REVERSE_SORTED);
+
+    // Random
+    printf("\nRunning bubble_sort on random array\n");
+    time_sort("bubble_sort on random", bubble_sort, length, RANDOM);
+
+     Try to get the CPU out of a low-power state...
     just_sort(bubble_sort, length, RANDOM);
     just_sort(bubble_sort, length, RANDOM);
     just_sort(bubble_sort, length, RANDOM);
@@ -190,6 +209,7 @@ int main(int argc, char* argv[]) {
     time_sort("bubble_sort on sorted", bubble_sort, length, SORTED);
     time_sort("bubble_sort on reverse", bubble_sort, length, REVERSE_SORTED);
     time_sort("bubble_sort on random", bubble_sort, length, RANDOM);
+    */
 
     return 0;
 }

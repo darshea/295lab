@@ -1,10 +1,38 @@
 1. Do you promise you got a "All heap blocks were freed" on your array-2d.c code from last week?
 YES.
 2. When bubble sorting a random array, what fraction of the running time do you think is being spent on examining values (the loops + comparison)? Swapping values? Branch mispredictions?
+The hypothesis we established was that time (1) spent examining values should be equivalent to the time it takes to sort an already sorted array. 
+According to your measurements, bubble_sort takes around 161ms on an already sorted array of 20000 values. 
+The total time taken to bubble sort a random array is 441ms, thus approximately 36% of time is spent on examining values (loops + comparison). 
+The remaining time could be attributed to value swapping and branch mispredictions.
+
 3. What were the tests of bubble sort you ran under perf? (Likely 2 or 3 runs with different calls to just_sort.)
+The tests of bubble_sort you ran under perf include three runs with different calls to just_sort: (1) on an already sorted array, (2) on a reverse sorted array, and (3) on a random array.
+
 4. What fraction of the branches at the if in bubble sort were mispredicted when the array was random? When it was already sorted? Note that for an array of 20000, the if should execute 199,990,000 times.
+Random Array:
+In this case, the number of branch-misses (mispredicted branches) is 44,624,975. The given total number of if-branches is 199,990,000. 
+The fraction of mispredicted branches when the array is random is calculated as follows:
+Number of mispredicted branches / Total if-branches = 44,624,975 / 199,990,000 = 0.22315 or approximately 22.315%.
+Already Sorted Array:
+In this case, the number of branch-misses (mispredicted branches) is 154,386. The given total number of if-branches is 199,990,000. 
+The fraction of mispredicted branches when the array is already sorted is calculated as follows:
+Number of mispredicted branches / Total if-branches = 154,386 / 199,990,000 = 0.000772 or approximately 0.0772%.
+So, the fraction of mispredicted branches at the 'if' in bubble sort is approximately 22.315% when the array is random, and approximately 0.0772% when the array is already sorted.
+
 5. How did the Perf report number of cache misses change with the larger 2D array "height"? Does it match your expectations?
+For the array 1000x1000, there are around 1300000000 L1 cache misses and around 1000000000 LLC cache misses. 
+When I increased the height of the 2D array to 2000x1000, the L1 cache misses increased to about 3000000000 and LLC cache misses increased to about 1000000000. 
+This makes sense and matches our expectations because as the size of the array increases, the data cannot fit into the cache as well and it causes more cache misses.
+
 6. How did the Cachegrind report number of cache misses change with the larger 2D array "height"? Does it match your expectations?
+For the array 1000x1000, there are around 80000000 D1 cache misses and about 20000000 LL cache misses. 
+When I increased the height of the 2D array to 2000x1000, the D1 cache misses increased to about 150000000 and LL cache misses increased to about 60000000. 
+This too matches expectations for the same reasons as above.
+
+
+Testing values:
+
 
 danbik@asb9838nu-a08:~/Desktop/295lab/lab9$ ./a.out 20000
 Array size: 156 kB
@@ -16,3 +44,992 @@ Array size: 156 kB
     bubble_sort on sorted sorted    20000 values in  161.28 ms
    bubble_sort on reverse sorted    20000 values in   98.30 ms
     bubble_sort on random sorted    20000 values in  443.88 ms
+
+
+    danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf stat -e branch-misses,branches,br_inst_retired.not_taken ./sort 20000
+Array size: 156 kB
+
+Running bubble_sort on already sorted array
+    bubble_sort on sorted sorted    20000 values in   93.67 ms
+
+Running bubble_sort on reverse sorted array
+   bubble_sort on reverse sorted    20000 values in  188.37 ms
+
+Running bubble_sort on random array
+    bubble_sort on random sorted    20000 values in  462.24 ms
+
+ Performance counter stats for './sort 20000':
+
+        44,743,706      branch-misses             #    2.97% of all branches        
+     1,504,229,628      branches                                                    
+       901,160,548      br_inst_retired.not_taken                                   
+
+       0.750429279 seconds time elapsed
+
+       0.747564000 seconds user
+       0.000000000 seconds sys
+
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf record -e branch-misses:pp,branches:pp,br_inst_retired.not_taken:pp ./sort 20000
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+Array size: 156 kB
+
+Running bubble_sort on already sorted array
+    bubble_sort on sorted sorted    20000 values in   95.47 ms
+
+Running bubble_sort on reverse sorted array
+   bubble_sort on reverse sorted    20000 values in  190.65 ms
+
+Running bubble_sort on random array
+    bubble_sort on random sorted    20000 values in  465.58 ms
+[ perf record: Woken up 2 times to write data ]
+[ perf record: Captured and wrote 0.317 MB perf.data (7259 samples) ]
+
+Samples: 1K of event 'branch-misses:pp', Event count (approx.): 44634745
+Overhead  Command  Shared Object     Symbol
+  99.17%  sort     sort              [.] bubble_sort                                                ◆
+   0.53%  sort     sort              [.] std::__introsort_loop<double*, long, __gnu_cxx::__ops::_Ite▒
+   0.12%  sort     sort              [.] std::__unguarded_linear_insert<double*, __gnu_cxx::__ops::_▒
+   0.06%  sort     [unknown]         [k] 0xffffffff932dfa6c                                         ▒
+   0.06%  sort     [unknown]         [k] 0xffffffff94000c20                                         ▒
+   0.03%  sort     sort              [.] 0x0000000000001174                                         ▒
+   0.02%  sort     [unknown]         [k] 0xffffffff934dc43c                                         ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff9331ed5d                                         ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff93464c69                                         ▒
+   0.00%  sort     libc-2.31.so      [.] random_r                                                   ▒
+   0.00%  sort     libc-2.31.so      [.] __libc_alloca_cutoff                                       ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff93236086                                         ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff93235ffc                                         ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff9331d66b                                         ▒
+   0.00%  perf     [unknown]         [k] 0xffffffff94000c20                                         ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff932a1f81                                         ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff932d136c                                         ▒
+   0.00%  sort     [unknown]         [k] 0xffffffff93c88ae6                                         ▒
+   0.00%  perf     [unknown]         [k] 0xffffffff93236086                                         ▒
+   0.00%  perf     [unknown]         [k] 0xffffffff93e016dc    
+
+Percent│      cmp     %rdi,%rsi                                                                     ▒
+       │    → ja      12c6 <bubble_sort(double*, unsigned long)+0x3b>                               ▒
+       │    → jmp     12a6 <bubble_sort(double*, unsigned long)+0x1b>                               ▒
+       │    ← retq                                                                                  ▒
+       │      add     $0x8,%rax                                                                     ▒
+  0.00 │      cmp     %rcx,%rax                                                                     ▒
+  0.04 │    → je      12a6 <bubble_sort(double*, unsigned long)+0x1b>                               ▒
+       │    if (array[i] > array[j]) {                                                              ▒
+       │      vmovsd  -0x8(%rdx),%xmm1                                                              ▒
+       │      vmovsd  (%rax),%xmm0                                                                  ▒
+       │      vcomisd %xmm0,%xmm1                                                                   ▒
+ 99.96 │    → jbe     12bd <bubble_sort(double*, unsigned long)+0x32>                               ▒
+       │    // swap array[i] and array[j]                                                           ▒
+       │    DATA_T tmp = array[j];                                                                  ▒
+       │    array[j] = array[i];                                                                    ▒
+       │      vmovsd  %xmm1,(%rax)                                                                  ▒
+       │    array[i] = tmp;                                                                         ▒
+       │      vmovsd  %xmm0,-0x8(%rdx)                                                              ▒
+       │    → jmp     12bd <bubble_sort(double*, unsigned long)+0x32>                               ▒
+       │    }                                                                                       ◆
+       │    }                                                                                       ▒
+       │    }                                                           
+Samples: 3K of event 'branches:pp', Event count (approx.): 1504101270
+Overhead  Command  Shared Object     Symbol
+  99.77%  sort     sort              [.] bubble_sort
+   0.12%  sort     sort              [.] create_array
+   0.03%  sort     sort              [.] std::__introsort_loop<double*, long, __gnu_cxx::__ops::_Iter
+   0.02%  sort     [unknown]         [k] 0xffffffff93e016c6
+   0.01%  sort     [unknown]         [k] 0xffffffff93491eda
+   0.01%  sort     ld-2.31.so        [.] _dl_relocate_object
+   0.01%  sort     [unknown]         [k] 0xffffffff9320f08c
+   0.01%  sort     sort              [.] std::__final_insertion_sort<double*, __gnu_cxx::__ops::_Iter
+   0.01%  sort     [unknown]         [k] 0xffffffffc0c1e0cf
+   0.00%  perf     [unknown]         [k] 0xffffffff9331eb85
+   0.00%  perf     [unknown]         [k] 0xffffffff932753fb
+   0.00%  perf     [unknown]         [k] 0xffffffff9320ffba
+   0.00%  perf     [unknown]         [k] 0xffffffff9320e219
+
+
+   Samples: 2K of event 'br_inst_retired.not_taken:pp', Event count (approx.): 901220277
+Overhead  Command  Shared Object  Symbol
+ 100.00%  sort     sort           [.] bubble_sort
+
+PERF ANNOTATE:
+
+Samples: 1K of event 'branch-misses:pp', 4000 Hz, Event count (approx.): 44634745
+bubble_sort  /home/danbik/Desktop/295lab/lab9/sort [Percent: local period]
+Percent│      cmp     %rdi,%rsi
+       │    → ja      12c6 <bubble_sort(double*, unsigned long)+0x3b>
+       │    → jmp     12a6 <bubble_sort(double*, unsigned long)+0x1b>
+       │    ← retq
+       │      add     $0x8,%rax
+  0.00 │      cmp     %rcx,%rax
+  0.04 │    → je      12a6 <bubble_sort(double*, unsigned long)+0x1b>
+       │    if (array[i] > array[j]) {
+       │      vmovsd  -0x8(%rdx),%xmm1
+       │      vmovsd  (%rax),%xmm0
+       │      vcomisd %xmm0,%xmm1
+ 99.96 │    → jbe     12bd <bubble_sort(double*, unsigned long)+0x32>
+       │    // swap array[i] and array[j]
+       │    DATA_T tmp = array[j];
+       │    array[j] = array[i];
+       │      vmovsd  %xmm1,(%rax)
+       │    array[i] = tmp;
+       │      vmovsd  %xmm0,-0x8(%rdx)
+       │    → jmp     12bd <bubble_sort(double*, unsigned long)+0x32>
+       │    }
+       │    }
+       │    }
+
+
+코드변경 후 (just_sort):
+
+             danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf record -e branch-misses:pp,branches:pp,br_inst_retired.not_taken:pp ./sort 20000
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+Array size: 156 kB
+
+Running bubble_sort on already sorted array
+    bubble_sort on sorted sorted    20000 values in   95.47 ms
+
+Running bubble_sort on reverse sorted array
+   bubble_sort on reverse sorted    20000 values in  190.65 ms
+
+Running bubble_sort on random array
+    bubble_sort on random sorted    20000 values in  465.58 ms
+[ perf record: Woken up 2 times to write data ]
+[ perf record: Captured and wrote 0.317 MB perf.data (7259 samples) ]
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf report
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf annotate
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ g++ -Wall -Wpedantic -std=c++17 -march=haswell -O1 -g sort.cpp -o sort
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf stat -e branch-misses,branches,br_inst_retired.not_taken ./sort 20000
+Array size: 156 kB
+Array size: 156 kB
+
+Running bubble_sort with just_sort on already sorted array
+
+Running bubble_sort with just_sort on reverse sorted array
+
+Running bubble_sort with just_sort on random array
+
+ Performance counter stats for './sort 20000':
+
+        44,435,890      branch-misses             #    2.96% of all branches        
+     1,502,761,706      branches                                                    
+       901,146,482      br_inst_retired.not_taken                                   
+
+       0.727414171 seconds time elapsed
+
+       0.719558000 seconds user
+       0.003997000 seconds sys
+
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$                                                                                        
+                                                              
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf record -e branch-misses:pp,branches:pp,br_inst_retired.not_taken:pp ./sort 20000
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+Array size: 156 kB
+Array size: 156 kB
+
+Running bubble_sort with just_sort on already sorted array
+
+Running bubble_sort with just_sort on reverse sorted array
+
+Running bubble_sort with just_sort on random array
+[ perf record: Woken up 2 times to write data ]
+[ perf record: Captured and wrote 0.316 MB perf.data (7245 samples) ]
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ 
+
+
+
+
+
+
+
+
+2D-array test:
+Shallow 얕은거:
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf stat -e L1-dcache-load-misses,L1-dcache-loads,LLC-load-misses,LLC-loads ./array-2d 80000000 1
+Array size: 625000 kB
+Calculated 2341.98 in    85.39 ms on 1*80000000 array.
+Calculated 2341.98 in    83.99 ms on 2*40000000 array.
+Calculated 2341.98 in    82.60 ms on 4*20000000 array.
+Calculated 2341.98 in    81.80 ms on 5*16000000 array.
+Calculated 2341.98 in    80.59 ms on 8*10000000 array.
+Calculated 2341.98 in    80.51 ms on 10*8000000 array.
+Calculated 2341.98 in    79.87 ms on 16*5000000 array.
+Calculated 2341.98 in    79.95 ms on 20*4000000 array.
+Calculated 2341.98 in    79.90 ms on 25*3200000 array.
+Calculated 2341.98 in    79.92 ms on 32*2500000 array.
+Calculated 2341.98 in    80.41 ms on 40*2000000 array.
+Calculated 2341.98 in    79.88 ms on 50*1600000 array.
+Calculated 2341.98 in    79.92 ms on 64*1250000 array.
+Calculated 2341.98 in    79.87 ms on 80*1000000 array.
+Calculated 2341.98 in    79.91 ms on 100*800000 array.
+Calculated 2341.98 in    79.91 ms on 125*640000 array.
+Calculated 2341.98 in    79.87 ms on 128*625000 array.
+Calculated 2341.98 in    79.86 ms on 160*500000 array.
+Calculated 2341.98 in    79.86 ms on 200*400000 array.
+Calculated 2341.98 in    79.87 ms on 250*320000 array.
+Calculated 2341.98 in    79.86 ms on 256*312500 array.
+Calculated 2341.98 in    79.83 ms on 320*250000 array.
+Calculated 2341.98 in    79.83 ms on 400*200000 array.
+Calculated 2341.98 in    79.84 ms on 500*160000 array.
+Calculated 2341.98 in    80.28 ms on 512*156250 array.
+Calculated 2341.98 in    79.74 ms on 625*128000 array.
+Calculated 2341.98 in    79.74 ms on 640*125000 array.
+Calculated 2341.98 in    79.76 ms on 800*100000 array.
+Calculated 2341.98 in    79.81 ms on 1000*80000 array.
+Calculated 2341.98 in    79.85 ms on 1024*78125 array.
+Calculated 2341.98 in    79.84 ms on 1250*64000 array.
+Calculated 2341.98 in    79.83 ms on 1280*62500 array.
+Calculated 2341.98 in    79.78 ms on 1600*50000 array.
+Calculated 2341.98 in    79.77 ms on 2000*40000 array.
+Calculated 2341.98 in    79.70 ms on 2500*32000 array.
+Calculated 2341.98 in    79.75 ms on 2560*31250 array.
+Calculated 2341.98 in    80.77 ms on 3125*25600 array.
+Calculated 2341.98 in    80.53 ms on 3200*25000 array.
+Calculated 2341.98 in    80.61 ms on 4000*20000 array.
+Calculated 2341.98 in    80.56 ms on 5000*16000 array.
+Calculated 2341.98 in    80.58 ms on 5120*15625 array.
+Calculated 2341.98 in    80.42 ms on 6250*12800 array.
+Calculated 2341.98 in    80.36 ms on 6400*12500 array.
+Calculated 2341.98 in    80.47 ms on 8000*10000 array.
+Calculated 2341.98 in    80.42 ms on 10000*8000 array.
+Calculated 2341.98 in    80.43 ms on 12500*6400 array.
+Calculated 2341.98 in    80.41 ms on 12800*6250 array.
+Calculated 2341.98 in    80.39 ms on 15625*5120 array.
+Calculated 2341.98 in    80.40 ms on 16000*5000 array.
+Calculated 2341.98 in    80.40 ms on 20000*4000 array.
+Calculated 2341.98 in    80.41 ms on 25000*3200 array.
+Calculated 2341.98 in    80.55 ms on 25600*3125 array.
+Calculated 2341.98 in    80.37 ms on 31250*2560 array.
+Calculated 2341.98 in    80.41 ms on 32000*2500 array.
+Calculated 2341.98 in    80.53 ms on 40000*2000 array.
+Calculated 2341.98 in    80.44 ms on 50000*1600 array.
+Calculated 2341.98 in    80.43 ms on 62500*1280 array.
+Calculated 2341.98 in    80.41 ms on 64000*1250 array.
+Calculated 2341.98 in    80.44 ms on 78125*1024 array.
+Calculated 2341.98 in    80.48 ms on 80000*1000 array.
+Calculated 2341.98 in    80.45 ms on 100000*800 array.
+Calculated 2341.98 in    80.71 ms on 125000*640 array.
+Calculated 2341.98 in    80.67 ms on 128000*625 array.
+Calculated 2341.98 in    80.55 ms on 156250*512 array.
+Calculated 2341.98 in    80.60 ms on 160000*500 array.
+Calculated 2341.98 in    80.62 ms on 200000*400 array.
+Calculated 2341.98 in    80.45 ms on 250000*320 array.
+Calculated 2341.98 in    80.44 ms on 312500*256 array.
+Calculated 2341.98 in    80.42 ms on 320000*250 array.
+Calculated 2341.98 in    80.45 ms on 400000*200 array.
+Calculated 2341.98 in    80.49 ms on 500000*160 array.
+Calculated 2341.98 in    80.39 ms on 625000*128 array.
+Calculated 2341.98 in    80.42 ms on 640000*125 array.
+Calculated 2341.98 in    80.49 ms on 800000*100 array.
+Calculated 2341.98 in    80.47 ms on 1000000*80 array.
+Calculated 2341.98 in    80.38 ms on 1250000*64 array.
+Calculated 2341.98 in    80.36 ms on 1600000*50 array.
+Calculated 2341.98 in    80.54 ms on 2000000*40 array.
+Calculated 2341.98 in    80.41 ms on 2500000*32 array.
+Calculated 2341.98 in    80.35 ms on 3200000*25 array.
+Calculated 2341.98 in    80.44 ms on 4000000*20 array.
+Calculated 2341.98 in    80.45 ms on 5000000*16 array.
+Calculated 2341.98 in    80.04 ms on 8000000*10 array.
+Calculated 2341.98 in    79.68 ms on 10000000*8 array.
+Calculated 2341.98 in    79.70 ms on 16000000*5 array.
+Calculated 2341.98 in    79.82 ms on 20000000*4 array.
+Calculated 2341.98 in    80.03 ms on 40000000*2 array.
+Calculated 2341.98 in    79.83 ms on 80000000*1 array.
+
+ Performance counter stats for './array-2d 80000000 1':
+
+       936,054,198      L1-dcache-load-misses     #   10.19% of all L1-dcache hits  
+     9,189,985,891      L1-dcache-loads                                             
+        20,594,041      LLC-load-misses           #   89.98% of all LL-cache hits   
+        22,887,514      LLC-loads                                                   
+
+       8.584214963 seconds time elapsed
+
+       8.412348000 seconds user
+       0.168006000 seconds sys
+
+
+깊은거:
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf stat -e L1-dcache-load-misses,L1-dcache-loads,LLC-load-misses,LLC-loads ./array-2d 80000000 10000
+Array size: 625000 kB
+Calculated 2341.98 in    85.73 ms on 1*80000000 array.
+Calculated 2341.98 in    83.95 ms on 2*40000000 array.
+Calculated 2341.98 in    82.44 ms on 4*20000000 array.
+Calculated 2341.98 in    81.41 ms on 5*16000000 array.
+Calculated 2341.98 in    80.44 ms on 8*10000000 array.
+Calculated 2341.98 in    80.38 ms on 10*8000000 array.
+Calculated 2341.98 in    79.71 ms on 16*5000000 array.
+Calculated 2341.98 in    79.75 ms on 20*4000000 array.
+Calculated 2341.98 in    79.75 ms on 25*3200000 array.
+Calculated 2341.98 in    79.72 ms on 32*2500000 array.
+Calculated 2341.98 in    79.79 ms on 40*2000000 array.
+Calculated 2341.98 in    79.71 ms on 50*1600000 array.
+Calculated 2341.98 in    79.61 ms on 64*1250000 array.
+Calculated 2341.98 in    79.58 ms on 80*1000000 array.
+Calculated 2341.98 in    79.60 ms on 100*800000 array.
+Calculated 2341.98 in    79.61 ms on 125*640000 array.
+Calculated 2341.98 in    79.55 ms on 128*625000 array.
+Calculated 2341.98 in    79.54 ms on 160*500000 array.
+Calculated 2341.98 in    79.57 ms on 200*400000 array.
+Calculated 2341.98 in    79.72 ms on 250*320000 array.
+Calculated 2341.98 in    79.73 ms on 256*312500 array.
+Calculated 2341.98 in    79.81 ms on 320*250000 array.
+Calculated 2341.98 in    79.81 ms on 400*200000 array.
+Calculated 2341.98 in    79.71 ms on 500*160000 array.
+Calculated 2341.98 in    79.50 ms on 512*156250 array.
+Calculated 2341.98 in    79.53 ms on 625*128000 array.
+Calculated 2341.98 in    79.74 ms on 640*125000 array.
+Calculated 2341.98 in    80.06 ms on 800*100000 array.
+Calculated 2341.98 in    79.73 ms on 1000*80000 array.
+Calculated 2341.98 in    80.68 ms on 1024*78125 array.
+Calculated 2341.98 in    80.58 ms on 1250*64000 array.
+Calculated 2341.98 in    80.38 ms on 1280*62500 array.
+Calculated 2341.98 in    79.54 ms on 1600*50000 array.
+Calculated 2341.98 in    79.55 ms on 2000*40000 array.
+Calculated 2341.98 in    79.52 ms on 2500*32000 array.
+Calculated 2341.98 in    79.53 ms on 2560*31250 array.
+Calculated 2341.98 in    79.53 ms on 3125*25600 array.
+Calculated 2341.98 in    79.52 ms on 3200*25000 array.
+Calculated 2341.98 in    79.50 ms on 4000*20000 array.
+Calculated 2341.98 in    79.51 ms on 5000*16000 array.
+Calculated 2341.98 in    79.53 ms on 5120*15625 array.
+Calculated 2341.98 in    79.66 ms on 6250*12800 array.
+Calculated 2341.98 in    79.57 ms on 6400*12500 array.
+Calculated 2341.98 in    79.56 ms on 8000*10000 array.
+Calculated 2341.98 in    79.56 ms on 10000*8000 array.
+Calculated 2341.98 in    79.91 ms on 12500*6400 array.
+Calculated 2341.98 in    82.94 ms on 12800*6250 array.
+Calculated 2341.98 in    83.79 ms on 15625*5120 array.
+Calculated 2341.98 in    84.18 ms on 16000*5000 array.
+Calculated 2341.98 in    83.55 ms on 20000*4000 array.
+Calculated 2341.98 in    81.67 ms on 25000*3200 array.
+Calculated 2341.98 in    79.87 ms on 25600*3125 array.
+Calculated 2341.98 in    79.75 ms on 31250*2560 array.
+Calculated 2341.98 in    79.93 ms on 32000*2500 array.
+Calculated 2341.98 in    79.72 ms on 40000*2000 array.
+Calculated 2341.98 in    79.57 ms on 50000*1600 array.
+Calculated 2341.98 in    79.64 ms on 62500*1280 array.
+Calculated 2341.98 in    79.63 ms on 64000*1250 array.
+Calculated 2341.98 in    79.66 ms on 78125*1024 array.
+Calculated 2341.98 in    79.69 ms on 80000*1000 array.
+Calculated 2341.98 in    79.85 ms on 100000*800 array.
+Calculated 2341.98 in    79.77 ms on 125000*640 array.
+Calculated 2341.98 in    79.79 ms on 128000*625 array.
+Calculated 2341.98 in    79.72 ms on 156250*512 array.
+Calculated 2341.98 in    79.60 ms on 160000*500 array.
+Calculated 2341.98 in    79.63 ms on 200000*400 array.
+Calculated 2341.98 in    79.76 ms on 250000*320 array.
+Calculated 2341.98 in    79.75 ms on 312500*256 array.
+Calculated 2341.98 in    79.73 ms on 320000*250 array.
+Calculated 2341.98 in    79.74 ms on 400000*200 array.
+Calculated 2341.98 in    79.65 ms on 500000*160 array.
+Calculated 2341.98 in    79.54 ms on 625000*128 array.
+Calculated 2341.98 in    79.96 ms on 640000*125 array.
+Calculated 2341.98 in    80.06 ms on 800000*100 array.
+Calculated 2341.98 in    79.84 ms on 1000000*80 array.
+Calculated 2341.98 in    80.03 ms on 1250000*64 array.
+Calculated 2341.98 in    82.03 ms on 1600000*50 array.
+Calculated 2341.98 in    79.75 ms on 2000000*40 array.
+Calculated 2341.98 in    80.19 ms on 2500000*32 array.
+Calculated 2341.98 in    80.64 ms on 3200000*25 array.
+Calculated 2341.98 in    80.52 ms on 4000000*20 array.
+Calculated 2341.98 in    80.46 ms on 5000000*16 array.
+Calculated 2341.98 in    80.49 ms on 8000000*10 array.
+Calculated 2341.98 in    80.33 ms on 10000000*8 array.
+Calculated 2341.98 in    80.29 ms on 16000000*5 array.
+Calculated 2341.98 in    80.28 ms on 20000000*4 array.
+Calculated 2341.98 in    80.32 ms on 40000000*2 array.
+Calculated 2341.98 in    80.15 ms on 80000000*1 array.
+
+ Performance counter stats for './array-2d 80000000 10000':
+
+       935,683,238      L1-dcache-load-misses     #   10.18% of all L1-dcache hits  
+     9,190,150,905      L1-dcache-loads                                             
+        20,555,688      LLC-load-misses           #   91.09% of all LL-cache hits   
+        22,567,461      LLC-loads                                                   
+
+       8.543110310 seconds time elapsed
+
+       8.410383000 seconds user
+       0.132037000 seconds sys
+
+
+얕은거:
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf record -e L1-dcache-load-misses:pp,L1-dcache-loads:pp,LLC-load-misses:pp,LLC-loads:pp ./array-2d 80000000 1
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+Array size: 625000 kB
+Calculated 2341.98 in    86.09 ms on 1*80000000 array.
+Calculated 2341.98 in    84.68 ms on 2*40000000 array.
+Calculated 2341.98 in    83.24 ms on 4*20000000 array.
+Calculated 2341.98 in    83.23 ms on 5*16000000 array.
+Calculated 2341.98 in    81.51 ms on 8*10000000 array.
+Calculated 2341.98 in    81.46 ms on 10*8000000 array.
+Calculated 2341.98 in    81.02 ms on 16*5000000 array.
+Calculated 2341.98 in    80.73 ms on 20*4000000 array.
+Calculated 2341.98 in    80.53 ms on 25*3200000 array.
+Calculated 2341.98 in    80.64 ms on 32*2500000 array.
+Calculated 2341.98 in    80.51 ms on 40*2000000 array.
+Calculated 2341.98 in    80.36 ms on 50*1600000 array.
+Calculated 2341.98 in    80.34 ms on 64*1250000 array.
+Calculated 2341.98 in    80.41 ms on 80*1000000 array.
+Calculated 2341.98 in    80.37 ms on 100*800000 array.
+Calculated 2341.98 in    80.36 ms on 125*640000 array.
+Calculated 2341.98 in    81.07 ms on 128*625000 array.
+Calculated 2341.98 in    80.44 ms on 160*500000 array.
+Calculated 2341.98 in    80.39 ms on 200*400000 array.
+Calculated 2341.98 in    80.38 ms on 250*320000 array.
+Calculated 2341.98 in    80.40 ms on 256*312500 array.
+Calculated 2341.98 in    80.42 ms on 320*250000 array.
+Calculated 2341.98 in    80.43 ms on 400*200000 array.
+Calculated 2341.98 in    80.42 ms on 500*160000 array.
+Calculated 2341.98 in    80.45 ms on 512*156250 array.
+Calculated 2341.98 in    80.36 ms on 625*128000 array.
+Calculated 2341.98 in    80.35 ms on 640*125000 array.
+Calculated 2341.98 in    80.36 ms on 800*100000 array.
+Calculated 2341.98 in    80.82 ms on 1000*80000 array.
+Calculated 2341.98 in    81.09 ms on 1024*78125 array.
+Calculated 2341.98 in    80.66 ms on 1250*64000 array.
+Calculated 2341.98 in    80.63 ms on 1280*62500 array.
+Calculated 2341.98 in    80.59 ms on 1600*50000 array.
+Calculated 2341.98 in    80.40 ms on 2000*40000 array.
+Calculated 2341.98 in    80.40 ms on 2500*32000 array.
+Calculated 2341.98 in    80.37 ms on 2560*31250 array.
+Calculated 2341.98 in    80.36 ms on 3125*25600 array.
+Calculated 2341.98 in    80.45 ms on 3200*25000 array.
+Calculated 2341.98 in    80.42 ms on 4000*20000 array.
+Calculated 2341.98 in    80.39 ms on 5000*16000 array.
+Calculated 2341.98 in    80.61 ms on 5120*15625 array.
+Calculated 2341.98 in    80.58 ms on 6250*12800 array.
+Calculated 2341.98 in    80.46 ms on 6400*12500 array.
+Calculated 2341.98 in    80.50 ms on 8000*10000 array.
+Calculated 2341.98 in    80.46 ms on 10000*8000 array.
+Calculated 2341.98 in    80.46 ms on 12500*6400 array.
+Calculated 2341.98 in    80.42 ms on 12800*6250 array.
+Calculated 2341.98 in    80.43 ms on 15625*5120 array.
+Calculated 2341.98 in    80.41 ms on 16000*5000 array.
+Calculated 2341.98 in    80.42 ms on 20000*4000 array.
+Calculated 2341.98 in    80.37 ms on 25000*3200 array.
+Calculated 2341.98 in    80.38 ms on 25600*3125 array.
+Calculated 2341.98 in    80.37 ms on 31250*2560 array.
+Calculated 2341.98 in    80.44 ms on 32000*2500 array.
+Calculated 2341.98 in    81.60 ms on 40000*2000 array.
+Calculated 2341.98 in    80.83 ms on 50000*1600 array.
+Calculated 2341.98 in    80.62 ms on 62500*1280 array.
+Calculated 2341.98 in    80.61 ms on 64000*1250 array.
+Calculated 2341.98 in    80.56 ms on 78125*1024 array.
+Calculated 2341.98 in    80.44 ms on 80000*1000 array.
+Calculated 2341.98 in    80.57 ms on 100000*800 array.
+Calculated 2341.98 in    80.42 ms on 125000*640 array.
+Calculated 2341.98 in    80.42 ms on 128000*625 array.
+Calculated 2341.98 in    80.39 ms on 156250*512 array.
+Calculated 2341.98 in    80.40 ms on 160000*500 array.
+Calculated 2341.98 in    80.39 ms on 200000*400 array.
+Calculated 2341.98 in    80.38 ms on 250000*320 array.
+Calculated 2341.98 in    80.42 ms on 312500*256 array.
+Calculated 2341.98 in    80.41 ms on 320000*250 array.
+Calculated 2341.98 in    80.33 ms on 400000*200 array.
+Calculated 2341.98 in    80.31 ms on 500000*160 array.
+Calculated 2341.98 in    80.36 ms on 625000*128 array.
+Calculated 2341.98 in    80.40 ms on 640000*125 array.
+Calculated 2341.98 in    80.30 ms on 800000*100 array.
+Calculated 2341.98 in    80.28 ms on 1000000*80 array.
+Calculated 2341.98 in    80.29 ms on 1250000*64 array.
+Calculated 2341.98 in    80.29 ms on 1600000*50 array.
+Calculated 2341.98 in    80.28 ms on 2000000*40 array.
+Calculated 2341.98 in    80.54 ms on 2500000*32 array.
+Calculated 2341.98 in    81.16 ms on 3200000*25 array.
+Calculated 2341.98 in    81.56 ms on 4000000*20 array.
+Calculated 2341.98 in    82.84 ms on 5000000*16 array.
+Calculated 2341.98 in    80.63 ms on 8000000*10 array.
+Calculated 2341.98 in    80.59 ms on 10000000*8 array.
+Calculated 2341.98 in    80.33 ms on 16000000*5 array.
+Calculated 2341.98 in    80.35 ms on 20000000*4 array.
+Calculated 2341.98 in    80.48 ms on 40000000*2 array.
+Calculated 2341.98 in    80.35 ms on 80000000*1 array.
+[ perf record: Woken up 7 times to write data ]
+[ perf record: Captured and wrote 1.507 MB perf.data (32890 samples) ]
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ 
+
+perf report:
+
+78.37%  array-2d  array-2d          [.] sum_array_row                                             ◆
+   6.39%  array-2d  array-2d          [.] create_array                                              ▒
+   5.38%  array-2d  libc-2.31.so      [.] random                                                    ▒
+   4.15%  array-2d  libc-2.31.so      [.] random_r                                                  ▒
+   1.74%  array-2d  array-2d          [.] sum_array_col                                             ▒
+   1.65%  array-2d  array-2d          [.] 0x0000000000001114                                        ▒
+   0.79%  array-2d  libc-2.31.so      [.] rand                                                      ▒
+   0.07%  array-2d  [unknown]         [k] 0xffffffff9343d084                                        ▒
+   0.05%  array-2d  [unknown]         [k] 0xffffffff934bac26                                        ▒
+   0.04%  array-2d  [unknown]         [k] 0xffffffff93429189                                        ▒
+   0.04%  array-2d  [unknown]         [k] 0xffffffff934be5cf                                        ▒
+   0.03%  array-2d  [unknown]         [k] 0xffffffff93204e83                                        ▒
+   0.03%  array-2d  [unknown]         [k] 0xffffffff9346abd5                                        ▒
+   0.02%  array-2d  [unknown]         [k] 0xffffffff9347526a                                        ▒
+   0.02%  array-2d  [unknown]         [k] 0xffffffff934740dd                                        ▒
+   0.02%  array-2d  [unknown]         [k] 0xffffffff93e00abd                                        ▒
+Cannot load tips.txt file, please install perf!    
+
+깊은거: 
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ perf record -e L1-dcache-load-misses:pp,L1-dcache-loads:pp,LLC-load-misses:pp,LLC-loads:pp ./array-2d 80000000 10000
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+Array size: 625000 kB
+Calculated 2341.98 in    87.44 ms on 1*80000000 array.
+Calculated 2341.98 in    86.17 ms on 2*40000000 array.
+Calculated 2341.98 in    84.62 ms on 4*20000000 array.
+Calculated 2341.98 in    84.17 ms on 5*16000000 array.
+Calculated 2341.98 in    82.85 ms on 8*10000000 array.
+Calculated 2341.98 in    82.58 ms on 10*8000000 array.
+Calculated 2341.98 in    82.11 ms on 16*5000000 array.
+Calculated 2341.98 in    82.09 ms on 20*4000000 array.
+Calculated 2341.98 in    81.72 ms on 25*3200000 array.
+Calculated 2341.98 in    81.59 ms on 32*2500000 array.
+Calculated 2341.98 in    82.06 ms on 40*2000000 array.
+Calculated 2341.98 in    81.84 ms on 50*1600000 array.
+Calculated 2341.98 in    81.88 ms on 64*1250000 array.
+Calculated 2341.98 in    81.97 ms on 80*1000000 array.
+Calculated 2341.98 in    82.23 ms on 100*800000 array.
+Calculated 2341.98 in    82.10 ms on 125*640000 array.
+Calculated 2341.98 in    81.48 ms on 128*625000 array.
+Calculated 2341.98 in    83.00 ms on 160*500000 array.
+Calculated 2341.98 in    79.40 ms on 200*400000 array.
+Calculated 2341.98 in    80.09 ms on 250*320000 array.
+Calculated 2341.98 in    79.20 ms on 256*312500 array.
+Calculated 2341.98 in    78.72 ms on 320*250000 array.
+Calculated 2341.98 in    78.43 ms on 400*200000 array.
+Calculated 2341.98 in    84.11 ms on 500*160000 array.
+Calculated 2341.98 in    83.58 ms on 512*156250 array.
+Calculated 2341.98 in    81.16 ms on 625*128000 array.
+Calculated 2341.98 in    80.45 ms on 640*125000 array.
+Calculated 2341.98 in    79.65 ms on 800*100000 array.
+Calculated 2341.98 in    78.24 ms on 1000*80000 array.
+Calculated 2341.98 in    77.60 ms on 1024*78125 array.
+Calculated 2341.98 in    80.01 ms on 1250*64000 array.
+Calculated 2341.98 in    78.69 ms on 1280*62500 array.
+Calculated 2341.98 in    78.79 ms on 1600*50000 array.
+Calculated 2341.98 in    78.22 ms on 2000*40000 array.
+Calculated 2341.98 in    77.92 ms on 2500*32000 array.
+Calculated 2341.98 in    78.23 ms on 2560*31250 array.
+Calculated 2341.98 in    78.89 ms on 3125*25600 array.
+Calculated 2341.98 in    77.95 ms on 3200*25000 array.
+Calculated 2341.98 in    79.84 ms on 4000*20000 array.
+Calculated 2341.98 in    79.04 ms on 5000*16000 array.
+Calculated 2341.98 in    78.15 ms on 5120*15625 array.
+Calculated 2341.98 in    78.35 ms on 6250*12800 array.
+Calculated 2341.98 in    77.97 ms on 6400*12500 array.
+Calculated 2341.98 in    77.72 ms on 8000*10000 array.
+Calculated 2341.98 in    78.19 ms on 10000*8000 array.
+Calculated 2341.98 in    77.76 ms on 12500*6400 array.
+Calculated 2341.98 in    78.43 ms on 12800*6250 array.
+Calculated 2341.98 in    77.60 ms on 15625*5120 array.
+Calculated 2341.98 in    77.88 ms on 16000*5000 array.
+Calculated 2341.98 in    80.83 ms on 20000*4000 array.
+Calculated 2341.98 in    80.95 ms on 25000*3200 array.
+Calculated 2341.98 in    80.22 ms on 25600*3125 array.
+Calculated 2341.98 in    77.49 ms on 31250*2560 array.
+Calculated 2341.98 in    77.60 ms on 32000*2500 array.
+Calculated 2341.98 in    79.14 ms on 40000*2000 array.
+Calculated 2341.98 in    78.26 ms on 50000*1600 array.
+Calculated 2341.98 in    78.09 ms on 62500*1280 array.
+Calculated 2341.98 in    78.06 ms on 64000*1250 array.
+Calculated 2341.98 in    77.64 ms on 78125*1024 array.
+Calculated 2341.98 in    78.69 ms on 80000*1000 array.
+Calculated 2341.98 in    77.46 ms on 100000*800 array.
+Calculated 2341.98 in    78.56 ms on 125000*640 array.
+Calculated 2341.98 in    81.64 ms on 128000*625 array.
+Calculated 2341.98 in    80.53 ms on 156250*512 array.
+Calculated 2341.98 in    79.39 ms on 160000*500 array.
+Calculated 2341.98 in    78.82 ms on 200000*400 array.
+Calculated 2341.98 in    78.51 ms on 250000*320 array.
+Calculated 2341.98 in    77.78 ms on 312500*256 array.
+Calculated 2341.98 in    77.87 ms on 320000*250 array.
+Calculated 2341.98 in    78.94 ms on 400000*200 array.
+Calculated 2341.98 in    78.70 ms on 500000*160 array.
+Calculated 2341.98 in    78.56 ms on 625000*128 array.
+Calculated 2341.98 in    78.87 ms on 640000*125 array.
+Calculated 2341.98 in    78.85 ms on 800000*100 array.
+Calculated 2341.98 in    79.20 ms on 1000000*80 array.
+Calculated 2341.98 in    79.39 ms on 1250000*64 array.
+Calculated 2341.98 in    82.22 ms on 1600000*50 array.
+Calculated 2341.98 in    80.64 ms on 2000000*40 array.
+Calculated 2341.98 in    78.38 ms on 2500000*32 array.
+Calculated 2341.98 in    77.84 ms on 3200000*25 array.
+Calculated 2341.98 in    77.15 ms on 4000000*20 array.
+Calculated 2341.98 in    78.06 ms on 5000000*16 array.
+Calculated 2341.98 in    82.28 ms on 8000000*10 array.
+Calculated 2341.98 in    82.50 ms on 10000000*8 array.
+Calculated 2341.98 in    82.22 ms on 16000000*5 array.
+Calculated 2341.98 in    82.45 ms on 20000000*4 array.
+Calculated 2341.98 in    82.27 ms on 40000000*2 array.
+Calculated 2341.98 in    82.64 ms on 80000000*1 array.
+[ perf record: Woken up 6 times to write data ]
+[ perf record: Captured and wrote 1.500 MB perf.data (32728 samples) ]
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ 
+
+perf report:
+
+Samples: 32K of event 'L1-dcache-loads', Event count (approx.): 9198311988
+Overhead  Command   Shared Object     Symbol
+  78.34%  array-2d  array-2d          [.] sum_array_row
+   6.88%  array-2d  libc-2.31.so      [.] random
+   5.98%  array-2d  array-2d          [.] create_array
+   3.02%  array-2d  libc-2.31.so      [.] random_r
+   1.74%  array-2d  array-2d          [.] sum_array_col
+   1.48%  array-2d  libc-2.31.so      [.] rand
+   0.88%  array-2d  array-2d          [.] 0x0000000000001114
+   0.04%  array-2d  [unknown]         [k] 0xffffffff932fc3cc
+   0.03%  array-2d  [unknown]         [k] 0xffffffff932fbf5c
+   0.03%  array-2d  [unknown]         [k] 0xffffffff9343d084
+   0.03%  array-2d  [unknown]         [k] 0xffffffff9343d0e7
+   0.03%  array-2d  [unknown]         [k] 0xffffffff934993c6
+   0.03%  array-2d  [unknown]         [k] 0xffffffff9344cff1
+   0.03%  array-2d  [unknown]         [k] 0xffffffff9342995e
+   0.03%  array-2d  [unknown]         [k] 0xffffffff934be5cf
+   0.02%  array-2d  [unknown]         [k] 0xffffffff934bac26
+Cannot load tips.txt file, please install perf!                                                ▒
+
+
+
+valgrind:
+
+얕은거:
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ valgrind --tool=cachegrind ./array-2d 800000 1
+==385649== Cachegrind, a cache and branch-prediction profiler
+==385649== Copyright (C) 2002-2017, and GNU GPL'd, by Nicholas Nethercote et al.
+==385649== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==385649== Command: ./array-2d 800000 1
+==385649== 
+--385649-- warning: L3 cache found, using its data for the LL simulation.
+--385649-- warning: specified LL cache: line_size 64  assoc 16  total_size 12,582,912
+--385649-- warning: simulated LL cache: line_size 64  assoc 24  total_size 12,582,912
+Array size: 6250 kB
+Calculated 33.1096 in    29.45 ms on 1*800000 array.
+Calculated 33.1096 in    16.74 ms on 2*400000 array.
+Calculated 33.1096 in    19.79 ms on 4*200000 array.
+Calculated 33.1096 in    23.17 ms on 5*160000 array.
+Calculated 33.1096 in    21.02 ms on 8*100000 array.
+Calculated 33.1096 in    18.07 ms on 10*80000 array.
+Calculated 33.1096 in    17.50 ms on 16*50000 array.
+Calculated 33.1096 in    17.21 ms on 20*40000 array.
+Calculated 33.1096 in    10.99 ms on 25*32000 array.
+Calculated 33.1096 in     8.72 ms on 32*25000 array.
+Calculated 33.1096 in     8.64 ms on 40*20000 array.
+Calculated 33.1096 in     8.52 ms on 50*16000 array.
+Calculated 33.1096 in     8.47 ms on 64*12500 array.
+Calculated 33.1096 in     8.39 ms on 80*10000 array.
+Calculated 33.1096 in     8.37 ms on 100*8000 array.
+Calculated 33.1096 in     8.39 ms on 125*6400 array.
+Calculated 33.1096 in     8.30 ms on 128*6250 array.
+Calculated 33.1096 in     8.25 ms on 160*5000 array.
+Calculated 33.1096 in     8.47 ms on 200*4000 array.
+Calculated 33.1096 in     8.34 ms on 250*3200 array.
+Calculated 33.1096 in     8.30 ms on 256*3125 array.
+Calculated 33.1096 in     8.28 ms on 320*2500 array.
+Calculated 33.1096 in     8.24 ms on 400*2000 array.
+Calculated 33.1096 in     8.25 ms on 500*1600 array.
+Calculated 33.1096 in     8.24 ms on 625*1280 array.
+Calculated 33.1096 in     8.14 ms on 640*1250 array.
+Calculated 33.1096 in     8.20 ms on 800*1000 array.
+Calculated 33.1096 in     8.19 ms on 1000*800 array.
+Calculated 33.1096 in     8.24 ms on 1250*640 array.
+Calculated 33.1096 in     8.24 ms on 1280*625 array.
+Calculated 33.1096 in     8.24 ms on 1600*500 array.
+Calculated 33.1096 in     8.37 ms on 2000*400 array.
+Calculated 33.1096 in     8.49 ms on 2500*320 array.
+Calculated 33.1096 in     8.23 ms on 3125*256 array.
+Calculated 33.1096 in     8.36 ms on 3200*250 array.
+Calculated 33.1096 in     8.22 ms on 4000*200 array.
+Calculated 33.1096 in     8.73 ms on 5000*160 array.
+Calculated 33.1096 in     8.70 ms on 6250*128 array.
+Calculated 33.1096 in     8.51 ms on 6400*125 array.
+Calculated 33.1096 in     9.11 ms on 8000*100 array.
+Calculated 33.1096 in     8.27 ms on 10000*80 array.
+Calculated 33.1096 in     8.28 ms on 12500*64 array.
+Calculated 33.1096 in     8.32 ms on 16000*50 array.
+Calculated 33.1096 in     8.50 ms on 20000*40 array.
+Calculated 33.1096 in     8.33 ms on 25000*32 array.
+Calculated 33.1096 in    10.72 ms on 32000*25 array.
+Calculated 33.1096 in     8.73 ms on 40000*20 array.
+Calculated 33.1096 in     8.45 ms on 50000*16 array.
+Calculated 33.1096 in     8.31 ms on 80000*10 array.
+Calculated 33.1096 in     8.36 ms on 100000*8 array.
+Calculated 33.1096 in     9.02 ms on 160000*5 array.
+Calculated 33.1096 in     8.53 ms on 200000*4 array.
+Calculated 33.1096 in    10.01 ms on 400000*2 array.
+Calculated 33.1096 in     9.48 ms on 800000*1 array.
+==385649== 
+==385649== I   refs:      276,001,243
+==385649== I1  misses:          1,300
+==385649== LLi misses:          1,273
+==385649== I1  miss rate:        0.00%
+==385649== LLi miss rate:        0.00%
+==385649== 
+==385649== D   refs:       69,775,386  (63,319,918 rd   + 6,455,468 wr)
+==385649== D1  misses:      5,908,320  ( 5,806,358 rd   +   101,962 wr)
+==385649== LLd misses:        102,738  (     2,110 rd   +   100,628 wr)
+==385649== D1  miss rate:         8.5% (       9.2%     +       1.6%  )
+==385649== LLd miss rate:         0.1% (       0.0%     +       1.6%  )
+==385649== 
+==385649== LL refs:         5,909,620  ( 5,807,658 rd   +   101,962 wr)
+==385649== LL misses:         104,011  (     3,383 rd   +   100,628 wr)
+==385649== LL miss rate:          0.0% (       0.0%     +       1.6%  )
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ 
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ cg_annotate cachegrind.out.*
+--------------------------------------------------------------------------------
+I1 cache:         32768 B, 64 B, 8-way associative
+D1 cache:         32768 B, 64 B, 8-way associative
+LL cache:         12582912 B, 64 B, 24-way associative
+Command:          ./array-2d 800000 1
+Data file:        cachegrind.out.385649
+Events recorded:  Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Events shown:     Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Event sort order: Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Thresholds:       0.1 100 100 100 100 100 100 100 100
+Include dirs:     
+User annotated:   
+Auto-annotation:  off
+
+--------------------------------------------------------------------------------
+Ir          I1mr  ILmr  Dr         D1mr      DLmr  Dw        D1mw    DLmw    
+--------------------------------------------------------------------------------
+276,001,243 1,300 1,273 63,319,918 5,806,358 2,110 6,455,468 101,962 100,628  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir          I1mr ILmr Dr         D1mr      DLmr Dw        D1mw    DLmw     file:function
+--------------------------------------------------------------------------------
+193,172,448    1    1 44,800,056 5,600,112    0         0       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:sum_array_row
+ 25,496,776    3    3  6,400,000         3    2 2,400,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/random_r.c:random_r
+ 19,200,016    0    0  1,600,002   200,004    0         0       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:sum_array_col
+ 16,800,000    2    2  6,400,000         0    0 1,600,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/random.c:random
+  7,200,020    3    3  1,600,004         1    1 1,600,004 100,000 100,000  /home/danbik/Desktop/295lab/lab9/array-2d.c:create_array
+  6,400,650    6    6          7         1    0        67       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:main
+  4,000,000    1    1    800,000         0    0   800,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/rand.c:rand
+  1,602,875   29   25    801,409       343    0        15       1       1  ???:???
+  1,600,000    0    0    800,000         1    1         0       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/../sysdeps/unix/sysv/linux/x86/lowlevellock.h:random
+
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ cg_annotate cachegrind.out.*
+--------------------------------------------------------------------------------
+I1 cache:         32768 B, 64 B, 8-way associative
+D1 cache:         32768 B, 64 B, 8-way associative
+LL cache:         12582912 B, 64 B, 24-way associative
+Command:          ./array-2d 800000 1
+Data file:        cachegrind.out.385649
+Events recorded:  Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Events shown:     Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Event sort order: Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Thresholds:       0.1 100 100 100 100 100 100 100 100
+Include dirs:     
+User annotated:   
+Auto-annotation:  off
+
+--------------------------------------------------------------------------------
+Ir          I1mr  ILmr  Dr         D1mr      DLmr  Dw        D1mw    DLmw    
+--------------------------------------------------------------------------------
+276,001,243 1,300 1,273 63,319,918 5,806,358 2,110 6,455,468 101,962 100,628  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir          I1mr ILmr Dr         D1mr      DLmr Dw        D1mw    DLmw     file:function
+--------------------------------------------------------------------------------
+193,172,448    1    1 44,800,056 5,600,112    0         0       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:sum_array_row
+ 25,496,776    3    3  6,400,000         3    2 2,400,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/random_r.c:random_r
+ 19,200,016    0    0  1,600,002   200,004    0         0       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:sum_array_col
+ 16,800,000    2    2  6,400,000         0    0 1,600,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/random.c:random
+  7,200,020    3    3  1,600,004         1    1 1,600,004 100,000 100,000  /home/danbik/Desktop/295lab/lab9/array-2d.c:create_array
+  6,400,650    6    6          7         1    0        67       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:main
+  4,000,000    1    1    800,000         0    0   800,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/rand.c:rand
+  1,602,875   29   25    801,409       343    0        15       1       1  ???:???
+  1,600,000    0    0    800,000         1    1         0       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/../sysdeps/unix/sysv/linux/x86/lowlevellock.h:random
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ valgrind --tool=cachegrind ./array-2d 800000 10000
+==388214== Cachegrind, a cache and branch-prediction profiler
+==388214== Copyright (C) 2002-2017, and GNU GPL'd, by Nicholas Nethercote et al.
+==388214== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==388214== Command: ./array-2d 800000 10000
+==388214== 
+--388214-- warning: L3 cache found, using its data for the LL simulation.
+--388214-- warning: specified LL cache: line_size 64  assoc 16  total_size 12,582,912
+--388214-- warning: simulated LL cache: line_size 64  assoc 24  total_size 12,582,912
+Array size: 6250 kB
+Calculated 33.1096 in    30.33 ms on 1*800000 array.
+Calculated 33.1096 in    23.12 ms on 2*400000 array.
+Calculated 33.1096 in    11.47 ms on 4*200000 array.
+Calculated 33.1096 in    12.02 ms on 5*160000 array.
+Calculated 33.1096 in    10.26 ms on 8*100000 array.
+Calculated 33.1096 in    11.95 ms on 10*80000 array.
+Calculated 33.1096 in    11.69 ms on 16*50000 array.
+Calculated 33.1096 in     9.29 ms on 20*40000 array.
+Calculated 33.1096 in     9.42 ms on 25*32000 array.
+Calculated 33.1096 in     8.90 ms on 32*25000 array.
+Calculated 33.1096 in     8.92 ms on 40*20000 array.
+Calculated 33.1096 in     8.59 ms on 50*16000 array.
+Calculated 33.1096 in    10.83 ms on 64*12500 array.
+Calculated 33.1096 in     8.38 ms on 80*10000 array.
+Calculated 33.1096 in     8.80 ms on 100*8000 array.
+Calculated 33.1096 in     8.38 ms on 125*6400 array.
+Calculated 33.1096 in     8.60 ms on 128*6250 array.
+Calculated 33.1096 in     8.41 ms on 160*5000 array.
+Calculated 33.1096 in     8.32 ms on 200*4000 array.
+Calculated 33.1096 in     9.30 ms on 250*3200 array.
+Calculated 33.1096 in     8.36 ms on 256*3125 array.
+Calculated 33.1096 in     8.66 ms on 320*2500 array.
+Calculated 33.1096 in     8.29 ms on 400*2000 array.
+Calculated 33.1096 in     8.45 ms on 500*1600 array.
+Calculated 33.1096 in     8.27 ms on 625*1280 array.
+Calculated 33.1096 in     8.49 ms on 640*1250 array.
+Calculated 33.1096 in     8.37 ms on 800*1000 array.
+Calculated 33.1096 in     8.20 ms on 1000*800 array.
+Calculated 33.1096 in     8.47 ms on 1250*640 array.
+Calculated 33.1096 in     8.48 ms on 1280*625 array.
+Calculated 33.1096 in     8.38 ms on 1600*500 array.
+Calculated 33.1096 in     8.26 ms on 2000*400 array.
+Calculated 33.1096 in     8.27 ms on 2500*320 array.
+Calculated 33.1096 in     8.32 ms on 3125*256 array.
+Calculated 33.1096 in     8.25 ms on 3200*250 array.
+Calculated 33.1096 in     9.72 ms on 4000*200 array.
+Calculated 33.1096 in     8.20 ms on 5000*160 array.
+Calculated 33.1096 in     8.46 ms on 6250*128 array.
+Calculated 33.1096 in     8.85 ms on 6400*125 array.
+Calculated 33.1096 in    11.55 ms on 8000*100 array.
+Calculated 33.1096 in    10.26 ms on 10000*80 array.
+Calculated 33.1096 in    10.92 ms on 12500*64 array.
+Calculated 33.1096 in     9.53 ms on 16000*50 array.
+Calculated 33.1096 in     9.16 ms on 20000*40 array.
+Calculated 33.1096 in    10.28 ms on 25000*32 array.
+Calculated 33.1096 in     9.64 ms on 32000*25 array.
+Calculated 33.1096 in     8.47 ms on 40000*20 array.
+Calculated 33.1096 in     8.83 ms on 50000*16 array.
+Calculated 33.1096 in     8.29 ms on 80000*10 array.
+Calculated 33.1096 in     9.50 ms on 100000*8 array.
+Calculated 33.1096 in     8.39 ms on 160000*5 array.
+Calculated 33.1096 in     8.55 ms on 200000*4 array.
+Calculated 33.1096 in     9.20 ms on 400000*2 array.
+Calculated 33.1096 in     8.45 ms on 800000*1 array.
+==388214== 
+==388214== I   refs:      276,002,112
+==388214== I1  misses:          1,301
+==388214== LLi misses:          1,274
+==388214== I1  miss rate:        0.00%
+==388214== LLi miss rate:        0.00%
+==388214== 
+==388214== D   refs:       69,775,733  (63,320,156 rd   + 6,455,577 wr)
+==388214== D1  misses:      5,908,269  ( 5,806,410 rd   +   101,859 wr)
+==388214== LLd misses:        102,740  (     2,110 rd   +   100,630 wr)
+==388214== D1  miss rate:         8.5% (       9.2%     +       1.6%  )
+==388214== LLd miss rate:         0.1% (       0.0%     +       1.6%  )
+==388214== 
+==388214== LL refs:         5,909,570  ( 5,807,711 rd   +   101,859 wr)
+==388214== LL misses:         104,014  (     3,384 rd   +   100,630 wr)
+==388214== LL miss rate:          0.0% (       0.0%     +       1.6%  )
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ 
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ cg_annotate cachegrind.out.*
+--------------------------------------------------------------------------------
+I1 cache:         32768 B, 64 B, 8-way associative
+D1 cache:         32768 B, 64 B, 8-way associative
+LL cache:         12582912 B, 64 B, 24-way associative
+Command:          ./array-2d 800000 1
+Data file:        cachegrind.out.385649
+Events recorded:  Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Events shown:     Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Event sort order: Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Thresholds:       0.1 100 100 100 100 100 100 100 100
+Include dirs:     
+User annotated:   cachegrind.out.388214
+Auto-annotation:  off
+
+--------------------------------------------------------------------------------
+Ir          I1mr  ILmr  Dr         D1mr      DLmr  Dw        D1mw    DLmw    
+--------------------------------------------------------------------------------
+276,001,243 1,300 1,273 63,319,918 5,806,358 2,110 6,455,468 101,962 100,628  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir          I1mr ILmr Dr         D1mr      DLmr Dw        D1mw    DLmw     file:function
+--------------------------------------------------------------------------------
+193,172,448    1    1 44,800,056 5,600,112    0         0       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:sum_array_row
+ 25,496,776    3    3  6,400,000         3    2 2,400,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/random_r.c:random_r
+ 19,200,016    0    0  1,600,002   200,004    0         0       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:sum_array_col
+ 16,800,000    2    2  6,400,000         0    0 1,600,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/random.c:random
+  7,200,020    3    3  1,600,004         1    1 1,600,004 100,000 100,000  /home/danbik/Desktop/295lab/lab9/array-2d.c:create_array
+  6,400,650    6    6          7         1    0        67       0       0  /home/danbik/Desktop/295lab/lab9/array-2d.c:main
+  4,000,000    1    1    800,000         0    0   800,000       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/rand.c:rand
+  1,602,875   29   25    801,409       343    0        15       1       1  ???:???
+  1,600,000    0    0    800,000         1    1         0       0       0  /build/glibc-SzIz7B/glibc-2.31/stdlib/../sysdeps/unix/sysv/linux/x86/lowlevellock.h:random
+
+--------------------------------------------------------------------------------
+-- User-annotated source: cachegrind.out.388214
+--------------------------------------------------------------------------------
+  No information has been collected for cachegrind.out.388214
+
+danbik@asb9838nu-d01:~/Desktop/295lab/lab9$ 
