@@ -1,1 +1,52 @@
+1. The running time for the dot product implementations varied depending on the approach used. 
+For the assembly implementation, dot double took 21.3 ms to run, while dot single took 19.3 ms. 
+This was comparable to the compiler versions, dot_double_c and dot_single_c, which took 20.6 ms and 19.1 ms respectively. 
+Interestingly, the assembly implementation was slightly slower in the case of double precision for my implementation, 
+but marginally faster in the case of single precision. 
+I figured this might be attributed to the different optimization strategies of the compiler and manual assembly programming.
 
+2. For the polynomial evaluation, the differences between the assembly and the compiler, 
+and single- vs double-precision were indeed much more noticeable. The assembly version,
+ran in 44.8 ms, which was significantly slower than the map_poly_double_c1 and map_poly_double_c2 that took 26.9 ms and 26.3 ms respectively. 
+map_poly_single, was the slowest at 49.0 ms, compared to the compiler version map_poly_single_c which took only 13.1 ms. 
+The assembly implementations were slower in both cases, suggesting that the compiler is more efficient 
+at optimizing these particular calculations.
+
+3. When comparing the x87-based sine calculation to the C implementation, 
+the C implementation was faster. The x87-based calculation sin_x87 took 0.302004 seconds, 
+while the C implementation sin_stdlib took only 0.131086 seconds. This demonstrates that 
+the C standard library's implementation of the sine function is highly optimized and faster than using x87 
+instructions directly, at least in this particular case. 
+This might be one of the reasons why the use of x87 instructions is less common in modern programming.
+
+
+danbik@asb9838nu-a08:~/Desktop/295lab/lab10$ ./a.out
+                   warmup took    20.4 ms
+                   warmup took    20.4 ms
+             dot_double_c took    20.6 ms
+               dot_double took    21.3 ms
+             dot_single_c took    19.1 ms
+               dot_single took    19.3 ms
+       map_poly_double_c1 took    26.9 ms
+       map_poly_double_c2 took    26.3 ms
+          map_poly_double took    44.8 ms
+        map_poly_single_c took    13.1 ms
+          map_poly_single took    49.0 ms
+
+danbik@asb9838nu-a08:~/Desktop/295lab/lab10$ ./a.out
+dot_double_c result: 1.1736
+dot_double result:   1.1736
+dot_single_c result: 1.1736
+dot_single result:   1.1736
+map_poly_double_c1 result:
+{ 13.105 7.98257 12.2256 12.4544 14.3174 6.69849 7.55013 12.0089 7.17059 9.39815 8.66996 10.2085 7.76063 9.0004 15.0642 14.3989 }
+map_poly_double result:
+{ 13.0684 7.17281 10.9037 14.4379 17.9031 5.80759 6.47779 10.553 6.15298 8.16963 7.69962 9.2109 6.74558 7.84106 14.4 21.6297 }
+map_poly_single_c result:
+{ 13.105 7.98257 12.2256 12.4544 14.3174 6.69849 7.55013 12.0089 7.17059 9.39815 8.66996 10.2085 7.76063 9.0004 15.0642 14.3989 }
+map_poly_single result:
+{ 38.2999 39.7568 44.6251 56.3525 73.3484 73.2038 73.6751 78.0415 78.2024 80.2826 82.1312 85.5103 86.3222 88.1322 97.476 121.854 }
+
+danbik@asb9838nu-a08:~/Desktop/295lab/lab10$ ./sin
+Time for sin_x87: 0.302004 seconds
+Time for sin_stdlib: 0.131086 seconds

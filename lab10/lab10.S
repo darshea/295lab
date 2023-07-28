@@ -1,117 +1,136 @@
 .section .note.GNU-stack,""
 .text
 
-.global dot_double
+.globl dot_double
 dot_double:
-    xorpd xmm0, xmm0         # Clear the xmm0 register to hold the sum (total)
+    xorpd %xmm0, %xmm0
 
 .loop:
-    cmp rdx, 0               # Check if the length is zero
-    je .done                 # If zero, exit the loop
+    cmpq $0, %rdx
+    je .done
 
-    movsd xmm1, QWORD [rdi]  # Load a double from arr1 into xmm1
-    mulsd xmm1, QWORD [rsi]  # Multiply the element from arr1 with the corresponding element from arr2
-    addsd xmm0, xmm1         # Add the result to the sum in xmm0
+    movsd (%rdi), %xmm1
+    mulsd (%rsi), %xmm1
+    addsd %xmm1, %xmm0
 
-    add rdi, 8               # Move to the next element in arr1 (double precision is 8 bytes)
-    add rsi, 8               # Move to the next element in arr2
-    sub rdx, 1               # Decrement the length counter
+    addq $8, %rdi
+    addq $8, %rsi
+    subq $1, %rdx
 
-    jmp .loop                # Repeat the loop
+    jmp .loop
 
 .done:
-    ret                      # Return with the result in xmm0
+    ret
 
 
-
-.global map_poly_double
+.globl map_poly_double
 map_poly_double:
-    xor rax, rax              # Clear rax to use as a loop counter
+    xor %rax, %rax
 
 .map_loop:
-    cmp rax, rdx              # Check if the loop counter reaches the length
-    je .map_done              # If so, exit the loop
+    cmp %rdx, %rax
+    je .map_done
 
-    movsd xmm0, QWORD [rdi]   # Load input[i] into xmm0
-    mulsd xmm0, xmm0          # Multiply x with x (x^2) -> xmm0 = x^2
-    mulsd xmm0, QWORD [xmm3]  # Multiply xmm0 (x^2) with d -> xmm0 = d*x^2
+    movsd (%rdi), %xmm0  
+    movaps %xmm0, %xmm4  
 
-    mulsd xmm1, xmm0          # Multiply xmm1 (b) with xmm0 (d*x^2) -> xmm1 = b*x^2
-    addsd xmm1, QWORD [xmm2]  # Add xmm1 (b*x^2) with c -> xmm1 = b*x^2 + c
+    mulsd %xmm0, %xmm0   
+    mulsd %xmm0, %xmm5   
 
-    mulsd xmm0, xmm1          # Multiply xmm0 (d*x^2) with xmm1 (b*x^2 + c) -> xmm0 = d*x^2 + b*x^4 + c*x^2
-    addsd xmm0, QWORD [xmm1]  # Add xmm0 (d*x^2 + b*x^4 + c*x^2) with b*x^2 + c -> xmm0 = a*x^3 + b*x^2 + c*x + d
+    movsd %xmm5, %xmm6   
+    mulsd %xmm3, %xmm6   
 
-    movsd QWORD [rsi], xmm0   # Store the result in output[i]
+    movsd %xmm0, %xmm5   
+    mulsd %xmm2, %xmm5   
 
-    add rdi, 8                # Move to the next element in the input array (double precision is 8 bytes)
-    add rsi, 8                # Move to the next element in the output array
-    inc rax                   # Increment the loop counter
+    mulsd %xmm1, %xmm4   
 
-    jmp .map_loop             # Repeat the loop
+    addsd %xmm6, %xmm0
+    addsd %xmm5, %xmm0
+    addsd %xmm4, %xmm0
+    addsd %xmm7, %xmm0
+
+    movsd %xmm0, (%rsi)
+
+    addq $8, %rdi
+    addq $8, %rsi
+    incq %rax
+
+    jmp .map_loop
 
 .map_done:
-    ret   
+    ret
 
 
 
-
-.global dot_single
+.globl dot_single
 dot_single:
-    xorps xmm0, xmm0        # Clear the xmm0 register to hold the sum (total)
+    xorps %xmm0, %xmm0
 
 .single_loop:
-    test rdx, rdx           # Check if the length is zero
-    jz .single_done         # If zero, exit the loop
+    test %rdx, %rdx
+    jz .single_done
 
-    movss xmm1, DWORD [rdi] # Load a float from arr1 into xmm1
-    mulss xmm1, DWORD [rsi] # Multiply the element from arr1 with the corresponding element from arr2
-    addss xmm0, xmm1        # Add the result to the sum in xmm0
+    movss (%rdi), %xmm1
+    mulss (%rsi), %xmm1
+    addss %xmm1, %xmm0
 
-    add rdi, 4              # Move to the next element in arr1 (single precision is 4 bytes)
-    add rsi, 4              # Move to the next element in arr2
-    dec rdx                 # Decrement the length counter
+    addq $4, %rdi
+    addq $4, %rsi
+    decq %rdx
 
-    jmp .single_loop        # Repeat the loop
+    jmp .single_loop
 
 .single_done:
-    ret                     # Return with the result in xmm0
-
+    ret
 
 
 .globl map_poly_single
-
-# Inputs:
-# rdi: Pointer to the input array (input)
-# rsi: Pointer to the output array (output)
-# rdx: Length of the arrays (number of elements)
-# xmm0, xmm1, xmm2, xmm3: Coefficients a, b, c, d (will be loaded into registers)
 map_poly_single:
-    xor rax, rax            # Clear rax to use as a loop counter
+    xor %rax, %rax
 
 .poly_loop:
-    test rdx, rdx           # Check if the length is zero
-    jz .poly_done           # If zero, exit the loop
+    cmpq %rax, %rdx
+    je .poly_done
 
-    movss xmm0, DWORD [rdi] # Load input[i] into xmm0
-    mulss xmm0, xmm0        # Multiply x with x (x^2) -> xmm0 = x^2
-    mulss xmm0, DWORD [xmm3]# Multiply xmm0 (x^2) with d -> xmm0 = d*x^2
+    movss (%rdi, %rax, 4), %xmm4  
+    movaps %xmm4, %xmm5            
 
-    mulss xmm1, xmm0        # Multiply xmm1 (b) with xmm0 (d*x^2) -> xmm1 = b*x^2
-    addss xmm1, DWORD [xmm2]# Add xmm1 (b*x^2) with c -> xmm1 = b*x^2 + c
+    mulss %xmm5, %xmm5             
+    mulss %xmm5, %xmm6             
 
-    mulss xmm0, xmm1        # Multiply xmm0 (d*x^2) with xmm1 (b*x^2 + c) -> xmm0 = d*x^2 + b*x^4 + c*x^2
-    addss xmm0, DWORD [xmm1]# Add xmm0 (d*x^2 + b*x^4 + c*x^2) with b*x^2 + c -> xmm0 = a*x^3 + b*x^2 + c*x + d
+    movss %xmm6, %xmm7             
+    mulss %xmm3, %xmm7             
 
-    movss DWORD [rsi], xmm0 # Store the result in output[i]
+    movss %xmm5, %xmm6            
+    mulss %xmm2, %xmm6            
 
-    add rdi, 4              # Move to the next element in the input array (single precision is 4 bytes)
-    add rsi, 4              # Move to the next element in the output array
-    dec rdx                 # Decrement the length counter
+    mulss %xmm1, %xmm4           
 
-    jmp .poly_loop          # Repeat the loop
+    addss %xmm7, %xmm0
+    addss %xmm6, %xmm0
+    addss %xmm4, %xmm0
+    addss %xmm7, %xmm0
+
+    movss %xmm0, (%rsi, %rax, 4)
+
+    incq %rax
+
+    jmp .poly_loop
 
 .poly_done:
-    ret                     # Return from the function
+    ret
 
-
+.global sin_x87
+sin_x87:
+    mov $0, %rcx
+s87_loop:
+    cmp %rdx, %rcx
+    jae s87_ret
+    fldl (%rdi, %rcx, 8)
+    fsin
+    fstpl (%rsi, %rcx, 8)
+    inc %rcx
+    jmp s87_loop
+s87_ret:
+    ret
