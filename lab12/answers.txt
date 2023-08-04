@@ -1,0 +1,211 @@
+1. 
+Without any compiler optimization, the local variables in the function hailstone are stored on the stack. 
+The variable n is stored at rbp-24 and is_even is stored at rbp-1. We can tell this by looking at the lines 
+mov QWORD PTR [rbp-24], rdi and mov BYTE PTR [rbp-1], al.
+When the -O1 optimization flag is added, the compiler changes the code in a way that it no longer needs 
+to store these local variables on the stack. It instead uses registers to hold these variables, which is 
+faster than accessing memory. 
+
+2. 
+In the hailstone_length function at -O2 optimization, 3*n+1 is calculated using the LEA instruction.
+
+3. 
+The significant optimization that occurs between -O1 and -O2 is the removal of the recursive call 
+to hailstone_length.
+In the -O1 version, we can see the call instruction being used to call hailstone_length again, which 
+is a recursive call.
+In the -O2 version, the compiler has replaced the recursion with a loop. Instead of calling hailstone_length 
+again, it just jumps back to the start of the loop using the jne instruction. This is more efficient 
+because it avoids the overhead of repeated function calls and can make the function run significantly faster.
+
+4. 
+In dot_single_c function, we can see instructions like vmovups, vmulps, vaddss, vshufps, vunpckhps, vextractf128 
+and vfmadd231ss which are vectorized instructions. Thus, dot_single_c function was vectorized.
+In map_poly_single_c function, we can also see instructions like vmovaps, vbroadcastss, vmulps, vfmadd132ps, vaddps 
+and vmovups which are vectorized instructions. Thus, map_poly_single_c function was vectorized too.
+
+Therefore, both dot_single_c and map_poly_single_c functions were vectorized at -O3 optimization level.
+
+5. 
+it seems the -funsafe optimization flag provides speed improvements for computations involving large arrays 
+by ignoring certain safety checks and using a more aggressive vectorization strategy - more vectorized. 
+
+6. 
+From these results, we can see that the -funsafe-math-optimizations flag can indeed improve the 
+performance of certain mathematical operations, though the exact improvement can vary depending 
+on the specifics of the code.
+Comparing the C implementations with the hand-written assembly and vectorclass implementations, 
+it appears that the latter versions are generally faster. 
+
+
+
+###########Test results#############
+with:
+danbik@asb9838nu-a08:~/Desktop/295lab/lab11$ 
+danbik@asb9838nu-a08:~/Desktop/295lab/lab11$ ./a.out
+                   warmup took    12.3 ms
+                   warmup took    12.3 ms
+             dot_double_c took    15.0 ms
+               dot_double took    21.9 ms
+           dot_double_vec took    12.9 ms
+            dot_double_vc took    12.8 ms
+
+             dot_single_c took     6.1 ms
+               dot_single took    19.3 ms
+           dot_single_vec took     6.3 ms
+            dot_single_vc took     6.1 ms
+
+       map_poly_double_c1 took    25.8 ms
+       map_poly_double_c2 took    26.4 ms
+          map_poly_double took    52.1 ms
+      map_poly_double_vec took    26.8 ms
+       map_poly_double_vc took    25.9 ms
+
+        map_poly_single_c took    13.4 ms
+          map_poly_single took    42.0 ms
+      map_poly_single_vec took    13.3 ms
+       map_poly_single_vc took    13.1 ms
+
+
+without:
+danbik@asb9838nu-a08:~/Desktop/295lab/lab11$ ./a.out
+                   warmup took    20.4 ms
+                   warmup took    20.7 ms
+             dot_double_c took    20.5 ms
+               dot_double took    21.2 ms
+           dot_double_vec took    13.0 ms
+            dot_double_vc took    12.6 ms
+
+             dot_single_c took    19.0 ms
+               dot_single took    19.2 ms
+           dot_single_vec took     6.3 ms
+            dot_single_vc took     6.1 ms
+
+       map_poly_double_c1 took    26.4 ms
+       map_poly_double_c2 took    25.7 ms
+          map_poly_double took    52.2 ms
+      map_poly_double_vec took    26.7 ms
+       map_poly_double_vc took    25.9 ms
+
+        map_poly_single_c took    13.0 ms
+          map_poly_single took    40.9 ms
+      map_poly_single_vec took    13.2 ms
+       map_poly_single_vc took    13.1 ms
+
+hailstone with no flags:
+hailstone_length(unsigned long):
+        push    rbp
+        mov     rbp, rsp
+        sub     rsp, 32
+        mov     QWORD PTR [rbp-24], rdi
+        mov     rax, QWORD PTR [rbp-24]
+        and     eax, 1
+        test    rax, rax
+        sete    al
+        mov     BYTE PTR [rbp-1], al
+        cmp     QWORD PTR [rbp-24], 1
+        jne     .L2
+        mov     eax, 0
+        jmp     .L3
+.L2:
+        cmp     BYTE PTR [rbp-1], 0
+        je      .L4
+        mov     rax, QWORD PTR [rbp-24]
+        shr     rax
+        mov     rdi, rax
+        call    hailstone_length(unsigned long)
+        inc     rax
+        jmp     .L3
+.L4:
+        mov     rdx, QWORD PTR [rbp-24]
+        mov     rax, rdx
+        add     rax, rax
+        add     rax, rdx
+        inc     rax
+        mov     rdi, rax
+        call    hailstone_length(unsigned long)
+        inc     rax
+.L3:
+        leave
+        ret
+
+
+
+
+-01:
+hailstone_length(unsigned long):
+        mov     rdx, rdi
+        and     edx, 1
+        mov     eax, 0
+        cmp     rdi, 1
+        je      .L6
+        sub     rsp, 8
+        test    rdx, rdx
+        jne     .L3
+        shr     rdi
+        call    hailstone_length(unsigned long)
+        inc     rax
+.L1:
+        add     rsp, 8
+        ret
+.L3:
+        lea     rdi, [rdi+1+rdi*2]
+        call    hailstone_length(unsigned long)
+        inc     rax
+        jmp     .L1
+.L6:
+        ret
+
+
+-O2:
+hailstone_length(unsigned long):
+        mov     rdx, rdi
+        xor     eax, eax
+        and     edx, 1
+        cmp     rdi, 1
+        jne     .L5
+        ret
+.L10:
+        shr     rdi
+        mov     rdx, rdi
+        and     edx, 1
+        cmp     rdi, 1
+        je      .L9
+.L5:
+        inc     rax
+        test    rdx, rdx
+        je      .L10
+        lea     rdi, [rdi+1+rdi*2]
+        mov     rdx, rdi
+        and     edx, 1
+        cmp     rdi, 1
+        jne     .L5
+.L9:
+        ret
+
+-O3:
+hailstone_length(unsigned long):
+        mov     rdx, rdi
+        xor     eax, eax
+        and     edx, 1
+        cmp     rdi, 1
+        je      .L6
+.L5:
+        inc     rax
+        test    rdx, rdx
+        jne     .L3
+        shr     rdi
+        mov     rdx, rdi
+        and     edx, 1
+        cmp     rdi, 1
+        jne     .L5
+        ret
+.L3:
+        lea     rdi, [rdi+1+rdi*2]
+        mov     rdx, rdi
+        and     edx, 1
+        cmp     rdi, 1
+        jne     .L5
+        ret
+.L6:
+        ret
