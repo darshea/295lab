@@ -1,8 +1,5 @@
-section .text
-global dot_double_vec
-global dot_single_vec
-global map_poly_double_vec
-global map_poly_single_vec
+.section .note.GNU-stack,""
+.text
 
 .globl dot_double
 dot_double:
@@ -40,7 +37,7 @@ map_poly_double:
     mulsd %xmm0, %xmm0   
     mulsd %xmm0, %xmm5   
 
-    movsd %xmm5, %xmm6   
+    movsd %xmm0, %xmm6   
     mulsd %xmm3, %xmm6   
 
     movsd %xmm0, %xmm5   
@@ -48,8 +45,8 @@ map_poly_double:
 
     mulsd %xmm1, %xmm4   
 
-    addsd %xmm6, %xmm0
-    addsd %xmm5, %xmm0
+    addsd %xmm6, %xmm5
+    addsd %xmm5, %xmm4
     addsd %xmm4, %xmm0
     addsd %xmm7, %xmm0
 
@@ -92,50 +89,38 @@ dot_single:
 map_poly_single:
     xor %rax, %rax
 
-.poly_loop:
-    cmpq %rax, %rdx
-    je .poly_done
+.map_loop_single:
+    cmp %rdx, %rax
+    je .map_done_single
 
-    movss (%rdi, %rax, 4), %xmm4  
-    movaps %xmm4, %xmm5            
+    movss (%rdi), %xmm0  
+    movaps %xmm0, %xmm4  
 
-    mulss %xmm5, %xmm5             
-    mulss %xmm5, %xmm6             
+    mulss %xmm0, %xmm0   
+    mulss %xmm0, %xmm5   
 
-    movss %xmm6, %xmm7             
-    mulss %xmm3, %xmm7             
+    movss %xmm0, %xmm6   
+    mulss %xmm3, %xmm6   
 
-    movss %xmm5, %xmm6            
-    mulss %xmm2, %xmm6            
+    movss %xmm0, %xmm5   
+    mulss %xmm2, %xmm5   
 
-    mulss %xmm1, %xmm4           
+    mulss %xmm1, %xmm4   
 
-    addss %xmm7, %xmm0
-    addss %xmm6, %xmm0
+    addss %xmm6, %xmm5
+    addss %xmm5, %xmm4
     addss %xmm4, %xmm0
     addss %xmm7, %xmm0
 
-    movss %xmm0, (%rsi, %rax, 4)
+    movss %xmm0, (%rsi)
 
+    addq $4, %rdi
+    addq $4, %rsi
     incq %rax
 
-    jmp .poly_loop
+    jmp .map_loop_single
 
-.poly_done:
-    ret
-
-.global sin_x87
-sin_x87:
-    mov $0, %rcx
-s87_loop:
-    cmp %rdx, %rcx
-    jae s87_ret
-    fldl (%rdi, %rcx, 8)
-    fsin
-    fstpl (%rsi, %rcx, 8)
-    inc %rcx
-    jmp s87_loop
-s87_ret:
+.map_done_single:
     ret
 
 
@@ -145,12 +130,13 @@ s87_ret:
 
 
 # dot_double_vec: Calculate dot product of two double arrays using SIMD instructions
+.global dot_double_vec
 dot_double_vec:
     vxorpd %ymm0, %ymm0, %ymm0  # Zero out ymm0 to store the sum
 
-.loop:
+.ddv_loop:
     cmpq $0, %rdx
-    je .done
+    je .ddv_done
 
     vmovupd (%rdi), %ymm1
     vmovupd (%rsi), %ymm2
@@ -162,22 +148,22 @@ dot_double_vec:
     addq $32, %rsi
     subq $4, %rdx  # We process 4 doubles at a time
 
-    jmp .loop
+    jmp .ddv_loop
 
-.done:
+.ddv_done:
     vhaddpd %ymm0, %ymm0, %ymm0  # Pairwise add to get final sum
     vextractf128 $1, %ymm0, %xmm1  # Extract upper 128 bits
     vaddpd %xmm1, %xmm0, %xmm0  # Add upper and lower sums
     ret
 
 
-# dot_single_vec: Calculate dot product of two single arrays using SIMD instructions
+.global dot_single_vec
 dot_single_vec:
     vxorps %ymm0, %ymm0, %ymm0  # Zero out ymm0 to store the sum
 
-.single_loop:
-    test %rdx, %rdx
-    jz .single_done
+.dsv_loop:
+    cmpq $0, %rdx
+    je .dsv_done
 
     vmovups (%rdi), %ymm1
     vmovups (%rsi), %ymm2
@@ -187,100 +173,91 @@ dot_single_vec:
 
     addq $32, %rdi
     addq $32, %rsi
-    subq $8, %rdx  # We process 8 singles at a time
+    subq $8, %rdx  # We process 8 floats at a time
 
-    jmp .single_loop
+    jmp .dsv_loop
 
-.single_done:
-    vhaddps %ymm0, %ymm0, %ymm0  # Pairwise add to get final sum
-    vextractf128 $1, %ymm0, %xmm1  # Extract upper 128 bits
-    vaddps %xmm1, %xmm0, %xmm0  # Add upper and lower sums
+.dsv_done:
+    vhaddps %ymm0, %ymm0, %ymm0 # Horizontal add to accumulate the 8 values into the lower half
+    vhaddps %ymm0, %ymm0, %ymm0 # Repeat to have the final sum in the first position
+    vextractf128 $1, %ymm0, %xmm1 # Extract the high 128 bits
+    vaddps %xmm1, %xmm0, %xmm0 # Add the high 128 bits to the low 128 bits
     ret
 
 
 # map_poly_double_vec: Evaluate a polynomial with double coefficients for a double array using SIMD instructions
+.global map_poly_double_vec
 map_poly_double_vec:
-    vmovupd (%rdi), %ymm0     # Load the polynomial coefficients
-    vbroadcastsd 0(%rdi), %ymm1
-    vbroadcastsd 8(%rdi), %ymm2
-    vbroadcastsd 16(%rdi), %ymm3
-    vbroadcastsd 24(%rdi), %ymm4
+    movq %rdx, %rax            # Copy length to a general-purpose register for loop counter
+
+    vbroadcastsd %xmm0, %ymm7  # Load a and broadcast to all YMM elements
+    vbroadcastsd %xmm1, %ymm8  # Load b and broadcast to all YMM elements
+    vbroadcastsd %xmm2, %ymm9  # Load c and broadcast to all YMM elements
+    vbroadcastsd %xmm3, %ymm10 # Load d and broadcast to all YMM elements
 
 .mp_loop:
-    cmpq $0, %rdx
+    cmpq $0, %rax
     je .mp_done
 
-    vmovupd (%rsi), %ymm5   # Load the x values
-    vmovapd %ymm5, %ymm6
-    vmovapd %ymm5, %ymm7
+    vmovupd (%rdi), %ymm0     # Load 4 double-precision values from input (a vector)
+    vmulpd %ymm0, %ymm0, %ymm1 # Compute x^2
+    vmulpd %ymm0, %ymm1, %ymm2 # Compute x^3
+    vmulpd %ymm7, %ymm2, %ymm3 # Compute a*x^3
 
-    vmulpd %ymm5, %ymm5, %ymm5   # Compute x^2
-    vmulpd %ymm5, %ymm6, %ymm6   # Compute x^3
+    vmulpd %ymm8, %ymm1, %ymm4 # Compute b*x^2
+    vmulpd %ymm9, %ymm0, %ymm5 # Compute c*x
 
-    # Compute ax^3
-    vmulpd %ymm1, %ymm6, %ymm6
+    vaddpd %ymm4, %ymm5, %ymm4 # Compute b*x^2 + c*x
+    vaddpd %ymm4, %ymm10, %ymm4 # Compute b*x^2 + c*x + d
 
-    # Compute bx^2
-    vmulpd %ymm2, %ymm5, %ymm5
+    vaddpd %ymm3, %ymm4, %ymm4 # Compute a*x^3 + b*x^2 + c*x + d
 
-    # Compute cx
-    vmulpd %ymm3, %ymm7, %ymm7
+    vmovupd %ymm4, (%rsi)      # Store the result to the output (a vector)
 
-    # Compute ax^3 + bx^2 + cx + d
-    vaddpd %ymm6, %ymm5, %ymm5
-    vaddpd %ymm7, %ymm5, %ymm5
-    vaddpd %ymm4, %ymm5, %ymm5
-
-    vmovupd %ymm5, (%rsi)
-
+    addq $32, %rdi
     addq $32, %rsi
-    subq $4, %rdx  # We process 4 doubles at a time
+    subq $4, %rax  # Decrement the loop counter by 4 (as we process 4 doubles at a time)
 
     jmp .mp_loop
 
 .mp_done:
     ret
 
+
 # map_poly_single_vec: Evaluate a polynomial with single coefficients for a single array using SIMD instructions
+.global map_poly_single_vec
 map_poly_single_vec:
-    vmovups (%rdi), %ymm0     # Load the polynomial coefficients
-    vbroadcastss 0(%rdi), %ymm1
-    vbroadcastss 4(%rdi), %ymm2
-    vbroadcastss 8(%rdi), %ymm3
-    vbroadcastss 12(%rdi), %ymm4
+    movq %rdx, %rax             # Copy length to a general-purpose register for loop counter
 
-.mpoly_loop:
-    cmpq $0, %rdx
-    je .mpoly_done
+    vbroadcastss %xmm0, %ymm7  # Load a and broadcast to all YMM elements
+    vbroadcastss %xmm1, %ymm8  # Load b and broadcast to all YMM elements
+    vbroadcastss %xmm2, %ymm9  # Load c and broadcast to all YMM elements
+    vbroadcastss %xmm3, %ymm10 # Load d and broadcast to all YMM elements
 
-    vmovups (%rsi), %ymm5   # Load the x values
-    vmovaps %ymm5, %ymm6
-    vmovaps %ymm5, %ymm7
+.mp_loop_single:
+    cmpq $0, %rax
+    je .mp_done_single
 
-    vmulps %ymm5, %ymm5, %ymm5   # Compute x^2
-    vmulps %ymm5, %ymm6, %ymm6   # Compute x^3
+    vmovups (%rdi), %ymm0      # Load 8 single-precision values from input (a vector)
+    vmulps %ymm0, %ymm0, %ymm1 # Compute x^2
+    vmulps %ymm0, %ymm1, %ymm2 # Compute x^3
+    vmulps %ymm7, %ymm2, %ymm3 # Compute a*x^3
 
-    # Compute ax^3
-    vmulps %ymm1, %ymm6, %ymm6
+    vmulps %ymm8, %ymm1, %ymm4 # Compute b*x^2
+    vmulps %ymm9, %ymm0, %ymm5 # Compute c*x
 
-    # Compute bx^2
-    vmulps %ymm2, %ymm5, %ymm5
+    vaddps %ymm4, %ymm5, %ymm4 # Compute b*x^2 + c*x
+    vaddps %ymm4, %ymm10, %ymm4 # Compute b*x^2 + c*x + d
 
-    # Compute cx
-    vmulps %ymm3, %ymm7, %ymm7
+    vaddps %ymm3, %ymm4, %ymm4 # Compute a*x^3 + b*x^2 + c*x + d
 
-    # Compute ax^3 + bx^2 + cx + d
-    vaddps %ymm6, %ymm5, %ymm5
-    vaddps %ymm7, %ymm5, %ymm5
-    vaddps %ymm4, %ymm5, %ymm5
+    vmovups %ymm4, (%rsi)       # Store the result to the output (a vector)
 
-    vmovups %ymm5, (%rsi)
-
+    addq $32, %rdi
     addq $32, %rsi
-    subq $8, %rdx  # We process 8 singles at a time
+    subq $8, %rax   # Decrement the loop counter by 8 (as we process 8 floats at a time)
 
-    jmp .mpoly_loop
+    jmp .mp_loop_single
 
-.mpoly_done:
+.mp_done_single:
     ret
-

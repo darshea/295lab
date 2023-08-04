@@ -1,3 +1,64 @@
-1. Relative to your assembly code last week, how much did the "dot product" and "map polynomial" implementations speed up when using the vector instructions?
-2. On the two problems, what was the relative speedup of vectorized implementations on single-precision floating point values, over double-precision?
-3. When timing your assembly (and vectorclass) implementations and the implementations created by the compiler, you likely saw that for the "dot product" problem, the C implementation performed more like the non-vectorized assembly. For the "map polynomial" problem, the C implementation performed more like the vectorized assembly. Why was the compiler able to vectorize one but not the other?
+1. Relative to your assembly code last week, how much did the "dot product" and "map polynomial" 
+implementations speed up when using the vector instructions?
+
+dot_double to dot_double_vec: The non-vectorized DP took 22.3ms, and the vectorized version took 13.7ms. So, the speedup is 22.3 / 13.7 = 1.63, approximately.
+dot_single to dot_single_vec: The non-vectorized version takes 19.7ms, and the vectorized version takes 6.4ms. So, the speedup is 19.7 / 6.4 = 3.08, approximately.
+map_poly_double to map_poly_double_vec: The non-vectorized version takes 52.7ms, and the vectorized version takes 27.0ms. So, the speedup is 52.7 / 27.0 = 1.95, approximately.
+map_poly_single to map_poly_single_vec: The non-vectorized version takes 41.1ms, and the vectorized version takes 13.9ms. So, the speedup is 41.1 / 13.9 = 2.96, approximately.
+These calculations suggest that there is a significant performance improvement by using vector instructions in both the operations, with more improvement observed for single-precision operations.
+
+2. On the two problems, what was the relative speedup of vectorized implementations on single-precision 
+floating point values, over double-precision?
+
+dot_double_vec to dot_single_vec: The vectorized double precision takes 13.7ms, and the vectorized single-precision version takes 6.4ms. 
+=> the speedup is 13.7 / 6.4 = 2.14, approximately.
+map_poly_double_vec to map_poly_single_vec: The vectorized double-precision map polynomial takes 27.0ms, and the vectorized single-precision version takes 13.9ms. 
+=> the speedup is 27.0 / 13.9 = 1.94, approximately.
+This suggests that for both operations, the single-precision versions are approximately twice 
+as fast as the double-precision versions when using vectorized implementations.
+
+3. When timing your assembly (and vectorclass) implementations and the implementations created by the 
+compiler, you likely saw that for the "dot product" problem, the C implementation performed more like 
+the non-vectorized assembly. For the "map polynomial" problem, the C implementation performed more like 
+the vectorized assembly. Why was the compiler able to vectorize one but not the other?
+
+From what I learned compilers use heuristics and certain rules to decide when to apply vectorization, 
+and sometimes it might not be able to vectorize certain loops or operations due to limitations in these 
+rules or because of uncertainty about whether vectorization would be beneficial.
+
+In the case of "dot product", the operation being performed in the loop is simple and straightforward: 
+a multiplication between corresponding elements and accumulating the result. 
+However, the compiler has to ensure there are no dependencies between iterations, meaning the 
+result of one iteration doesn't affect the next. 
+
+On the other hand, the "map polynomial" operation is a little more complex, but still each operation 
+in the loop is independent of the others. Compilers are generally good at vectorizing such mathematical 
+operations that don't have dependencies between loop iterations, which is probably why the C implementation 
+performance was more similar to the vectorized assembly.
+
+
+test results:
+
+danbik@asb9838nu-a08:~/Desktop/295lab/lab11$ ./a.out
+                   warmup took    20.5 ms
+                   warmup took    22.2 ms
+             dot_double_c took    21.8 ms
+               dot_double took    22.3 ms
+           dot_double_vec took    13.7 ms
+            dot_double_vc took    13.3 ms
+
+             dot_single_c took    19.2 ms
+               dot_single took    19.7 ms
+           dot_single_vec took     6.4 ms
+            dot_single_vc took     6.7 ms
+
+       map_poly_double_c1 took    29.2 ms
+       map_poly_double_c2 took    30.0 ms
+          map_poly_double took    52.7 ms
+      map_poly_double_vec took    27.0 ms
+       map_poly_double_vc took    28.3 ms
+
+        map_poly_single_c took    14.3 ms
+          map_poly_single took    41.1 ms
+      map_poly_single_vec took    13.9 ms
+       map_poly_single_vc took    14.0 ms
