@@ -34,6 +34,7 @@ by ignoring certain safety checks and using a more aggressive vectorization stra
 From these results, we can see that the -funsafe-math-optimizations flag can indeed improve the 
 performance of certain mathematical operations, though the exact improvement can vary depending 
 on the specifics of the code.
+
 Comparing the C implementations with the hand-written assembly and vectorclass implementations, 
 it appears that the latter versions are generally faster. 
 
